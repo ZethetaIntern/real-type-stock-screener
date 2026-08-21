@@ -25,6 +25,7 @@
     "@tanstack/react-table": "^9.1.2",
     "@tanstack/react-virtual": "^3.14.10",
     "clsx": "^2.1.0",
+    "idb": "^8.0.3",
     "immer": "^11.1.18",
     "lightweight-charts": "^5.2.1",
     "lucide-react": "^0.400.0",

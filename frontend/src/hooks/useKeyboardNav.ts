@@ -1,18 +1,28 @@
 'use client';
 
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { useStockStore } from '@/stores/stockStore';
+import { Stock } from '@/types/stock';
 
 interface UseKeyboardNavOptions {
-  onEnter?: () => void;
-  onEscape?: () => void;
-  onToggleFilters?: () => void;
-  onToggleChart?: () => void;
-  onSearch?: () => void;
+  stocks?: Stock[];
+  onStockSelect?: (symbol: string) => void;
 }
 
 export function useKeyboardNav(options: UseKeyboardNavOptions = {}) {
-  const { filterPanelOpen, setFilterPanelOpen, chartOpen, setChartOpen } = useStockStore();
+  const { stocks = [], onStockSelect } = options;
+  const {
+    filterPanelOpen,
+    setFilterPanelOpen,
+    chartOpen,
+    setChartOpen,
+    selectedSymbol,
+    setSelectedSymbol,
+    toggleWatchlist,
+  } = useStockStore();
+
+  const focusedRowIndex = useRef<number>(-1);
+  const showCheatSheet = useRef<boolean>(false);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -28,7 +38,6 @@ export function useKeyboardNav(options: UseKeyboardNavOptions = {}) {
           if (!e.ctrlKey && !e.metaKey) {
             e.preventDefault();
             setFilterPanelOpen(!filterPanelOpen);
-            options.onToggleFilters?.();
           }
           break;
 
@@ -37,25 +46,126 @@ export function useKeyboardNav(options: UseKeyboardNavOptions = {}) {
           if (!e.ctrlKey && !e.metaKey) {
             e.preventDefault();
             setChartOpen(!chartOpen);
-            options.onToggleChart?.();
           }
           break;
 
         case '/':
           e.preventDefault();
-          options.onSearch?.();
+          const searchInput = document.querySelector('input[type="text"]') as HTMLInputElement;
+          if (searchInput) {
+            searchInput.focus();
+          }
           break;
 
         case 'Escape':
-          options.onEscape?.();
+          if (showCheatSheet.current) {
+            showCheatSheet.current = false;
+          }
           break;
 
         case 'Enter':
-          options.onEnter?.();
+          if (selectedSymbol) {
+            setChartOpen(true);
+          }
+          break;
+
+        case ' ':
+          e.preventDefault();
+          if (selectedSymbol) {
+            toggleWatchlist(selectedSymbol);
+          }
+          break;
+
+        case 'ArrowDown':
+          e.preventDefault();
+          if (stocks.length > 0) {
+            focusedRowIndex.current = Math.min(focusedRowIndex.current + 1, stocks.length - 1);
+            setSelectedSymbol(stocks[focusedRowIndex.current].symbol);
+            onStockSelect?.(stocks[focusedRowIndex.current].symbol);
+          }
+          break;
+
+        case 'ArrowUp':
+          e.preventDefault();
+          if (stocks.length > 0) {
+            focusedRowIndex.current = Math.max(focusedRowIndex.current - 1, 0);
+            setSelectedSymbol(stocks[focusedRowIndex.current].symbol);
+            onStockSelect?.(stocks[focusedRowIndex.current].symbol);
+          }
+          break;
+
+        case 'Home':
+          e.preventDefault();
+          if (stocks.length > 0) {
+            focusedRowIndex.current = 0;
+            setSelectedSymbol(stocks[0].symbol);
+            onStockSelect?.(stocks[0].symbol);
+          }
+          break;
+
+        case 'End':
+          e.preventDefault();
+          if (stocks.length > 0) {
+            focusedRowIndex.current = stocks.length - 1;
+            setSelectedSymbol(stocks[stocks.length - 1].symbol);
+            onStockSelect?.(stocks[stocks.length - 1].symbol);
+          }
+          break;
+
+        case 'PageDown':
+          e.preventDefault();
+          if (stocks.length > 0) {
+            focusedRowIndex.current = Math.min(focusedRowIndex.current + 20, stocks.length - 1);
+            setSelectedSymbol(stocks[focusedRowIndex.current].symbol);
+            onStockSelect?.(stocks[focusedRowIndex.current].symbol);
+          }
+          break;
+
+        case 'PageUp':
+          e.preventDefault();
+          if (stocks.length > 0) {
+            focusedRowIndex.current = Math.max(focusedRowIndex.current - 20, 0);
+            setSelectedSymbol(stocks[focusedRowIndex.current].symbol);
+            onStockSelect?.(stocks[focusedRowIndex.current].symbol);
+          }
+          break;
+
+        case '?':
+          if (!e.ctrlKey && !e.metaKey) {
+            e.preventDefault();
+            showCheatSheet.current = !showCheatSheet.current;
+          }
+          break;
+
+        case 'Tab':
+          e.preventDefault();
+          if (e.shiftKey) {
+            if (chartOpen) {
+              setChartOpen(false);
+            } else if (filterPanelOpen) {
+              setFilterPanelOpen(false);
+            }
+          } else {
+            if (!filterPanelOpen) {
+              setFilterPanelOpen(true);
+            } else if (!chartOpen) {
+              setChartOpen(true);
+            }
+          }
           break;
       }
     },
-    [filterPanelOpen, chartOpen, setFilterPanelOpen, setChartOpen, options]
+    [
+      filterPanelOpen,
+      chartOpen,
+      selectedSymbol,
+      stocks,
+      setFilterPanelOpen,
+      setChartOpen,
+      setSelectedSymbol,
+      toggleWatchlist,
+      onStockSelect,
+    ]
   );
 
   useEffect(() => {
@@ -66,6 +176,8 @@ export function useKeyboardNav(options: UseKeyboardNavOptions = {}) {
   return {
     filterPanelOpen,
     chartOpen,
+    selectedSymbol,
+    showCheatSheet: showCheatSheet.current,
     toggleFilters: () => setFilterPanelOpen(!filterPanelOpen),
     toggleChart: () => setChartOpen(!chartOpen),
   };

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef, useCallback } from 'react';
+import { useMemo, useRef, useCallback, useState } from 'react';
 import {
   useLegacyTable as useReactTable,
   getCoreRowModel,
@@ -13,16 +13,8 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { Stock } from '@/types/stock';
 import { useStockStore } from '@/stores/stockStore';
 import clsx from 'clsx';
-import { useState } from 'react';
 import SimpleBar from 'simplebar-react';
-import {
-  PriceCell,
-  ChangeCell,
-  VolumeCell,
-  MarketCapCell,
-  RSICell,
-  WatchlistCell,
-} from './cells';
+import { PriceCell, ChangeCell, VolumeCell, MarketCapCell, RSICell, WatchlistCell } from './cells';
 
 const ROW_HEIGHT = 36;
 const OVERSCAN = 10;
@@ -43,7 +35,9 @@ function DataGridComponent({ stocks, onRowClick }: DataGridProps) {
       {
         accessorKey: 'symbol',
         header: 'Symbol',
-        size: 100,
+        size: 120,
+        minSize: 100,
+        enableResizing: true,
         cell: ({ row }) => (
           <div className="flex items-center gap-2">
             <WatchlistCell
@@ -51,9 +45,7 @@ function DataGridComponent({ stocks, onRowClick }: DataGridProps) {
               isWatchlisted={watchlist.has(row.original.symbol)}
               onToggle={() => toggleWatchlist(row.original.symbol)}
             />
-            <span className="font-mono font-semibold text-blue-500">
-              {row.original.symbol}
-            </span>
+            <span className="font-mono font-semibold text-blue-500">{row.original.symbol}</span>
           </div>
         ),
       },
@@ -61,6 +53,8 @@ function DataGridComponent({ stocks, onRowClick }: DataGridProps) {
         accessorKey: 'companyName',
         header: 'Company',
         size: 180,
+        minSize: 120,
+        enableResizing: true,
         cell: ({ getValue }) => (
           <span className="truncate block max-w-[180px]">{getValue() as string}</span>
         ),
@@ -69,6 +63,8 @@ function DataGridComponent({ stocks, onRowClick }: DataGridProps) {
         accessorKey: 'lastPrice',
         header: 'LTP',
         size: 100,
+        minSize: 80,
+        enableResizing: true,
         cell: ({ row }) => (
           <PriceCell value={row.original.lastPrice} symbol={row.original.symbol} />
         ),
@@ -77,6 +73,8 @@ function DataGridComponent({ stocks, onRowClick }: DataGridProps) {
         accessorKey: 'changePercent',
         header: '% Chg',
         size: 100,
+        minSize: 80,
+        enableResizing: true,
         cell: ({ row }) => (
           <ChangeCell value={row.original.changePercent} symbol={row.original.symbol} />
         ),
@@ -85,18 +83,24 @@ function DataGridComponent({ stocks, onRowClick }: DataGridProps) {
         accessorKey: 'volume',
         header: 'Volume',
         size: 100,
+        minSize: 80,
+        enableResizing: true,
         cell: ({ getValue }) => <VolumeCell value={getValue() as number} />,
       },
       {
         accessorKey: 'marketCap',
         header: 'Mkt Cap',
         size: 120,
+        minSize: 100,
+        enableResizing: true,
         cell: ({ getValue }) => <MarketCapCell value={getValue() as number} />,
       },
       {
         accessorKey: 'pe',
         header: 'P/E',
         size: 70,
+        minSize: 60,
+        enableResizing: true,
         cell: ({ getValue }) => {
           const val = getValue() as number | null;
           return (
@@ -110,6 +114,8 @@ function DataGridComponent({ stocks, onRowClick }: DataGridProps) {
         accessorKey: 'pb',
         header: 'P/B',
         size: 70,
+        minSize: 60,
+        enableResizing: true,
         cell: ({ getValue }) => (
           <span className="font-mono tabular-nums text-gray-300">
             {(getValue() as number).toFixed(2)}
@@ -120,6 +126,8 @@ function DataGridComponent({ stocks, onRowClick }: DataGridProps) {
         accessorKey: 'sector',
         header: 'Sector',
         size: 100,
+        minSize: 80,
+        enableResizing: true,
         cell: ({ getValue }) => (
           <span className="px-2 py-1 bg-gray-800 rounded text-xs text-gray-300">
             {getValue() as string}
@@ -130,12 +138,16 @@ function DataGridComponent({ stocks, onRowClick }: DataGridProps) {
         accessorKey: 'rsi14',
         header: 'RSI',
         size: 70,
+        minSize: 60,
+        enableResizing: true,
         cell: ({ getValue }) => <RSICell value={getValue() as number} />,
       },
       {
         accessorKey: 'roe',
         header: 'ROE',
         size: 70,
+        minSize: 60,
+        enableResizing: true,
         cell: ({ getValue }) => (
           <span className="font-mono tabular-nums text-gray-300">
             {(getValue() as number).toFixed(1)}%
@@ -146,6 +158,8 @@ function DataGridComponent({ stocks, onRowClick }: DataGridProps) {
         accessorKey: 'roce',
         header: 'ROCE',
         size: 70,
+        minSize: 60,
+        enableResizing: true,
         cell: ({ getValue }) => (
           <span className="font-mono tabular-nums text-gray-300">
             {(getValue() as number).toFixed(1)}%
@@ -156,6 +170,8 @@ function DataGridComponent({ stocks, onRowClick }: DataGridProps) {
         accessorKey: 'debtToEquity',
         header: 'D/E',
         size: 70,
+        minSize: 60,
+        enableResizing: true,
         cell: ({ getValue }) => (
           <span className="font-mono tabular-nums text-gray-300">
             {(getValue() as number).toFixed(2)}
@@ -166,6 +182,8 @@ function DataGridComponent({ stocks, onRowClick }: DataGridProps) {
         accessorKey: 'dividendYield',
         header: 'Div Yld',
         size: 80,
+        minSize: 60,
+        enableResizing: true,
         cell: ({ getValue }) => (
           <span className="font-mono tabular-nums text-gray-300">
             {(getValue() as number).toFixed(2)}%
@@ -176,20 +194,20 @@ function DataGridComponent({ stocks, onRowClick }: DataGridProps) {
         accessorKey: 'beta',
         header: 'Beta',
         size: 70,
+        minSize: 60,
+        enableResizing: true,
         cell: ({ getValue }) => {
           const val = getValue() as number;
           const color = val > 1 ? 'text-negative' : val < 1 ? 'text-positive' : 'text-gray-300';
-          return (
-            <span className={clsx('font-mono tabular-nums', color)}>
-              {val.toFixed(2)}
-            </span>
-          );
+          return <span className={clsx('font-mono tabular-nums', color)}>{val.toFixed(2)}</span>;
         },
       },
       {
         accessorKey: 'changeAbsolute',
         header: 'Day Chg',
         size: 90,
+        minSize: 70,
+        enableResizing: true,
         cell: ({ row }) => {
           const livePrice = livePrices.get(row.original.symbol);
           const base = livePrice?.price ?? row.original.lastPrice;
@@ -234,11 +252,9 @@ function DataGridComponent({ stocks, onRowClick }: DataGridProps) {
   const virtualRows = virtualizer.getVirtualItems();
   const totalSize = virtualizer.getTotalSize();
 
-  const paddingTop = virtualRows.length > 0 ? virtualRows[0]?.start ?? 0 : 0;
+  const paddingTop = virtualRows.length > 0 ? (virtualRows[0]?.start ?? 0) : 0;
   const paddingBottom =
-    virtualRows.length > 0
-      ? totalSize - (virtualRows[virtualRows.length - 1]?.end ?? 0)
-      : 0;
+    virtualRows.length > 0 ? totalSize - (virtualRows[virtualRows.length - 1]?.end ?? 0) : 0;
 
   const handleRowClick = useCallback(
     (stock: Stock) => {
@@ -258,36 +274,38 @@ function DataGridComponent({ stocks, onRowClick }: DataGridProps) {
           aria-label="Stock Screener Results"
           aria-rowcount={rows.length}
         >
-          <table className="w-full">
+          <table className="w-full" style={{ width: table.getCenterTotalSize() }}>
             <thead className="sticky top-0 z-10 bg-gray-100 dark:bg-gray-900">
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => (
-                    <th
-                      key={header.id}
-                      className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-800 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
-                      style={{ width: header.getSize() }}
-                      onClick={header.column.getToggleSortingHandler()}
-                      role="columnheader"
-                      aria-sort={
-                        header.column.getIsSorted()
-                          ? header.column.getIsSorted() === 'asc'
-                            ? 'ascending'
-                            : 'descending'
-                          : 'none'
-                      }
-                    >
-                      <div className="flex items-center gap-2">
-                        {flexRender(header.column.columnDef.header, header.getContext())}
-                        {header.column.getIsSorted() === 'asc' && (
-                          <span className="text-blue-500">↑</span>
-                        )}
-                        {header.column.getIsSorted() === 'desc' && (
-                          <span className="text-blue-500">↓</span>
-                        )}
-                      </div>
-                    </th>
-                  ))}
+                  {headerGroup.headers.map((header) => {
+                    return (
+                      <th
+                        key={header.id}
+                        className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-800 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
+                        style={{ width: header.getSize() }}
+                        onClick={header.column.getToggleSortingHandler()}
+                        role="columnheader"
+                        aria-sort={
+                          header.column.getIsSorted()
+                            ? header.column.getIsSorted() === 'asc'
+                              ? 'ascending'
+                              : 'descending'
+                            : 'none'
+                        }
+                      >
+                        <div className="flex items-center gap-2">
+                          {flexRender(header.column.columnDef.header, header.getContext())}
+                          {header.column.getIsSorted() === 'asc' && (
+                            <span className="text-blue-500">↑</span>
+                          )}
+                          {header.column.getIsSorted() === 'desc' && (
+                            <span className="text-blue-500">↓</span>
+                          )}
+                        </div>
+                      </th>
+                    );
+                  })}
                 </tr>
               ))}
             </thead>
@@ -305,21 +323,26 @@ function DataGridComponent({ stocks, onRowClick }: DataGridProps) {
                     key={row.id}
                     className={clsx(
                       'border-b border-gray-100 dark:border-gray-900 cursor-pointer transition-colors',
-                      isSelected ? 'bg-blue-100 dark:bg-blue-900/30' : 'hover:bg-gray-50 dark:hover:bg-gray-900'
+                      isSelected
+                        ? 'bg-blue-100 dark:bg-blue-900/30'
+                        : 'hover:bg-gray-50 dark:hover:bg-gray-900'
                     )}
                     onClick={() => handleRowClick(row.original)}
                     role="row"
                     aria-rowindex={virtualRow.index + 2}
                   >
-                    {row.getVisibleCells().map((cell) => (
-                      <td
-                        key={cell.id}
-                        className="py-2 px-4 text-sm"
-                        role="gridcell"
-                      >
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </td>
-                    ))}
+                    {row.getVisibleCells().map((cell) => {
+                      return (
+                        <td
+                          key={cell.id}
+                          className="py-2 px-4 text-sm"
+                          role="gridcell"
+                          style={{ width: cell.column.getSize() }}
+                        >
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </td>
+                      );
+                    })}
                   </tr>
                 );
               })}

@@ -68,16 +68,7 @@ export interface OHLCV {
 }
 
 export type FilterOperator =
-  | 'eq'
-  | 'neq'
-  | 'gt'
-  | 'gte'
-  | 'lt'
-  | 'lte'
-  | 'between'
-  | 'in'
-  | 'notIn'
-  | 'contains';
+  'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'between' | 'in' | 'notIn' | 'contains';
 
 export type FilterValue = number | string | boolean | number[] | string[];
 
@@ -139,3 +130,30 @@ export const INDEX_MEMBERSHIP = [
   'NIFTY Smallcap 250',
   'BSE Sensex',
 ];
+
+export const INDUSTRIES: Record<Sector, string[]> = {
+  IT: ['Software Services', 'IT Consulting', 'BPO', 'Hardware', 'Semiconductors'],
+  Banking: ['Private Bank', 'Public Bank', 'NBFC', 'Insurance', 'Asset Management'],
+  Pharma: ['Generic Drugs', 'API', 'Formulations', 'Biotech', 'Herbal'],
+  FMCG: ['Personal Care', 'Food Products', 'Household Care', 'Beverages', 'Tobacco'],
+  Auto: ['Automobiles', 'Auto Components', 'Two Wheelers', 'Commercial Vehicles', 'Tractors'],
+  Metal: ['Steel', 'Aluminium', 'Copper', 'Mining', 'Ferro Alloys'],
+  Energy: ['Oil & Gas', 'Power Generation', 'Power Distribution', 'Renewable Energy', 'Coal'],
+  Realty: ['Real Estate', 'Construction', 'Infrastructure', 'Cement', 'Building Materials'],
+  Telecom: [
+    'Telecom Services',
+    'Tower Infrastructure',
+    'Network Equipment',
+    'Content Providers',
+    'Cable TV',
+  ],
+  Infrastructure: ['EPC', 'Roads', 'Highways', 'Bridges', 'Urban Infrastructure'],
+  Media: [
+    'Media & Entertainment',
+    'Broadcasting',
+    'Publishing',
+    'Digital Media',
+    'Film Production',
+  ],
+  Others: ['Diversified', 'Trading', 'Financial Services', 'Logistics', 'Textiles'],
+};

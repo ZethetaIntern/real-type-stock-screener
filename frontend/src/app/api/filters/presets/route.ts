@@ -43,9 +43,78 @@ const PRESETS = [
 ];
 
 export async function GET() {
+  const start = performance.now();
+
   return NextResponse.json({
     success: true,
     data: PRESETS,
-    meta: { total: PRESETS.length, page: 1, pageSize: PRESETS.length, timestamp: new Date().toISOString(), executionTimeMs: 0 },
+    meta: {
+      total: PRESETS.length,
+      page: 1,
+      pageSize: PRESETS.length,
+      timestamp: new Date().toISOString(),
+      executionTimeMs: Math.round(performance.now() - start),
+    },
   });
+}
+
+export async function POST(request: Request) {
+  const start = performance.now();
+
+  try {
+    const body = await request.json();
+    const { name, filters } = body;
+
+    if (!name || !filters) {
+      return NextResponse.json(
+        {
+          success: false,
+          data: null,
+          meta: {
+            total: 0,
+            page: 1,
+            pageSize: 1,
+            timestamp: new Date().toISOString(),
+            executionTimeMs: Math.round(performance.now() - start),
+          },
+          error: { code: 'INVALID_INPUT', message: 'Name and filters are required' },
+        },
+        { status: 400 }
+      );
+    }
+
+    const newPreset = {
+      id: `custom-${Date.now()}`,
+      name,
+      filters,
+    };
+
+    return NextResponse.json({
+      success: true,
+      data: newPreset,
+      meta: {
+        total: 1,
+        page: 1,
+        pageSize: 1,
+        timestamp: new Date().toISOString(),
+        executionTimeMs: Math.round(performance.now() - start),
+      },
+    });
+  } catch {
+    return NextResponse.json(
+      {
+        success: false,
+        data: null,
+        meta: {
+          total: 0,
+          page: 1,
+          pageSize: 1,
+          timestamp: new Date().toISOString(),
+          executionTimeMs: Math.round(performance.now() - start),
+        },
+        error: { code: 'PARSE_ERROR', message: 'Invalid JSON body' },
+      },
+      { status: 400 }
+    );
+  }
 }
