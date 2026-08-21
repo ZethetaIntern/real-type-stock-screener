@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchStocks } from '@/lib/api';
 import { useStockStore } from '@/stores/stockStore';
@@ -15,6 +15,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { OfflineBanner } from '@/components/Layout/OfflineBanner';
 import { ScreenReaderAnnouncements } from '@/components/Layout/ScreenReaderAnnouncements';
 import { KeyboardCheatSheet } from '@/components/Layout/KeyboardCheatSheet';
+import { CommandPalette } from '@/components/Layout/CommandPalette';
 import clsx from 'clsx';
 
 export default function ScreenerPage() {
@@ -29,6 +30,7 @@ export default function ScreenerPage() {
   const { stocks, filteredCount, totalCount, filterExecutionTime } = useStockScreener();
   const [showCheatSheet, setShowCheatSheet] = useState(false);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+  const [showCommandPalette, setShowCommandPalette] = useState(false);
 
   const { data: stockData, isLoading } = useQuery({
     queryKey: ['stocks', 'universe'],
@@ -53,6 +55,18 @@ export default function ScreenerPage() {
     setShowCheatSheet(keyboardCheatSheet);
   }, [keyboardCheatSheet]);
 
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+      e.preventDefault();
+      setShowCommandPalette((prev) => !prev);
+    }
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleKeyDown]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-white flex items-center justify-center">
@@ -70,9 +84,13 @@ export default function ScreenerPage() {
       <Header onToggleMobileFilter={() => setIsMobileFilterOpen(!isMobileFilterOpen)} />
       <ScreenReaderAnnouncements />
       <KeyboardCheatSheet isOpen={showCheatSheet} onClose={() => setShowCheatSheet(false)} />
+      <CommandPalette
+        isOpen={showCommandPalette}
+        onClose={() => setShowCommandPalette(false)}
+        stocks={stocks}
+      />
 
       <div className="flex h-[calc(100vh-57px)]">
-        {/* Filter Sidebar - Desktop */}
         {filterPanelOpen && (
           <aside className="hidden md:block w-80 flex-shrink-0 border-r border-gray-200 dark:border-gray-800/50 bg-gray-50 dark:bg-gray-900/50">
             <ErrorBoundary name="Filter Panel">
@@ -81,7 +99,6 @@ export default function ScreenerPage() {
           </aside>
         )}
 
-        {/* Filter Sidebar - Mobile Overlay */}
         {isMobileFilterOpen && (
           <div className="md:hidden fixed inset-0 z-40">
             <div
@@ -96,9 +113,7 @@ export default function ScreenerPage() {
           </div>
         )}
 
-        {/* Main Content Area */}
         <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Status Bar */}
           <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-800/50 flex items-center justify-between bg-gray-100 dark:bg-gray-900/30">
             <div className="flex items-center gap-4">
               <span className="text-sm text-gray-500 dark:text-gray-400">
@@ -114,14 +129,23 @@ export default function ScreenerPage() {
                 </span>
               )}
             </div>
-            <span className="text-xs text-gray-400 dark:text-gray-500 font-mono">
-              Filter: {filterExecutionTime.toFixed(1)}ms
-            </span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowCommandPalette(true)}
+                className="flex items-center gap-2 px-3 py-1.5 text-xs bg-gray-200 dark:bg-gray-800 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors"
+              >
+                <span className="text-gray-500 dark:text-gray-400">Search...</span>
+                <kbd className="px-1.5 py-0.5 font-mono bg-gray-300 dark:bg-gray-700 rounded text-[10px]">
+                  Ctrl+K
+                </kbd>
+              </button>
+              <span className="text-xs text-gray-400 dark:text-gray-500 font-mono">
+                Filter: {filterExecutionTime.toFixed(1)}ms
+              </span>
+            </div>
           </div>
 
-          {/* Grid + Chart Layout */}
           <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
-            {/* DataGrid */}
             <div
               className={clsx(
                 'overflow-hidden transition-all duration-300',
@@ -133,7 +157,6 @@ export default function ScreenerPage() {
               </ErrorBoundary>
             </div>
 
-            {/* Chart Panel */}
             {chartOpen && selectedSymbol && (
               <div
                 className={clsx(
@@ -149,7 +172,6 @@ export default function ScreenerPage() {
               </div>
             )}
 
-            {/* Empty state when chart is open but no stock selected */}
             {chartOpen && !selectedSymbol && (
               <div className="md:w-2/5 w-full border-t md:border-t-0 md:border-l border-gray-200 dark:border-gray-800/50 flex items-center justify-center bg-gray-50 dark:bg-gray-900/30">
                 <div className="text-center text-gray-400 dark:text-gray-500">
