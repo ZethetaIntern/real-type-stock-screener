@@ -2,13 +2,13 @@
 
 import { useMemo, useRef, useCallback } from 'react';
 import {
-  useReactTable,
+  useLegacyTable as useReactTable,
   getCoreRowModel,
   getSortedRowModel,
-  flexRender,
-  ColumnDef,
-  SortingState,
-} from '@tanstack/react-table';
+  type LegacyColumnDef as ColumnDef,
+} from '@tanstack/react-table/legacy';
+import { flexRender } from '@tanstack/react-table';
+import type { SortingState } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { Stock } from '@/types/stock';
 import { useStockStore } from '@/stores/stockStore';
@@ -68,21 +68,17 @@ function DataGridComponent({ stocks, onRowClick }: DataGridProps) {
         accessorKey: 'lastPrice',
         header: 'LTP',
         size: 100,
-        cell: ({ row }) => {
-          const livePrice = livePrices.get(row.original.symbol);
-          const price = livePrice?.price ?? row.original.lastPrice;
-          return <PriceCell value={price} />;
-        },
+        cell: ({ row }) => (
+          <PriceCell value={row.original.lastPrice} symbol={row.original.symbol} />
+        ),
       },
       {
         accessorKey: 'changePercent',
         header: '% Chg',
         size: 100,
-        cell: ({ row }) => {
-          const livePrice = livePrices.get(row.original.symbol);
-          const change = livePrice?.changePercent ?? row.original.changePercent;
-          return <ChangeCell value={change} />;
-        },
+        cell: ({ row }) => (
+          <ChangeCell value={row.original.changePercent} symbol={row.original.symbol} />
+        ),
       },
       {
         accessorKey: 'volume',
