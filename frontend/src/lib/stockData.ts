@@ -322,3 +322,26 @@ export function simulateNextPrice(
   const priceChange = drift * dt + volatility * randomShock;
   return currentPrice * (1 + priceChange);
 }
+
+export function simulateSectorMovement(
+  stocks: Stock[],
+  sectorCorrelation: number = 0.6
+): Map<string, number> {
+  const sectorShock = normalRandom();
+  const updates = new Map<string, number>();
+
+  for (const stock of stocks) {
+    const idiosyncratic = normalRandom();
+    const combinedShock =
+      sectorCorrelation * sectorShock +
+      Math.sqrt(1 - sectorCorrelation ** 2) * idiosyncratic;
+    const volatility = stock.beta * 0.02;
+    const dt = 1 / 252;
+    const drift = 0.0001;
+    const priceChange = drift * dt + volatility * Math.sqrt(dt) * combinedShock;
+    const newPrice = stock.lastPrice * (1 + priceChange);
+    updates.set(stock.symbol, Math.round(newPrice * 100) / 100);
+  }
+
+  return updates;
+}
