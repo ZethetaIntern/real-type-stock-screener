@@ -10,6 +10,7 @@ import { Header } from '@/components/Layout/Header';
 import { FilterPanel } from '@/components/FilterPanel/FilterPanel';
 import DataGrid from '@/components/DataGrid/DataGrid';
 import StockChart from '@/components/Chart/StockChart';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import clsx from 'clsx';
 
 export default function ScreenerPage() {
@@ -48,7 +49,9 @@ export default function ScreenerPage() {
             'border-r border-gray-800 overflow-y-auto transition-all duration-200',
             'w-80 flex-shrink-0'
           )}>
-            <FilterPanel />
+            <ErrorBoundary name="Filter Panel">
+              <FilterPanel />
+            </ErrorBoundary>
           </aside>
         )}
 
@@ -67,12 +70,16 @@ export default function ScreenerPage() {
               'overflow-auto',
               chartOpen && selectedSymbol ? 'w-3/5' : 'w-full'
             )}>
-              <DataGrid stocks={stocks} onRowClick={(stock) => setSelectedSymbol(stock.symbol)} />
+              <ErrorBoundary name="Data Grid">
+                <DataGrid stocks={stocks} onRowClick={(stock) => setSelectedSymbol(stock.symbol)} />
+              </ErrorBoundary>
             </div>
 
             {chartOpen && selectedSymbol && (
               <div className="w-2/5 border-l border-gray-800 overflow-y-auto">
-                <StockChart symbol={selectedSymbol} />
+                <ErrorBoundary name="Stock Chart">
+                  <StockChart symbol={selectedSymbol} />
+                </ErrorBoundary>
               </div>
             )}
           </div>
