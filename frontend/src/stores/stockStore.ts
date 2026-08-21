@@ -91,9 +91,9 @@ export const useStockStore = create<StockStore>()(
         livePrices: new Map(),
         batchUpdatePrices: (updates) =>
           set((state) => {
-            for (const [symbol, update] of updates) {
+            updates.forEach((update, symbol) => {
               state.livePrices.set(symbol, { ...update, timestamp: Date.now() });
-            }
+            });
           }),
 
         // Watchlist

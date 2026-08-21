@@ -30,9 +30,9 @@ function createPredicate(field: keyof Stock, operator: FilterOperator, value: Fi
         return typeof stockValue === 'number' && stockValue >= min && stockValue <= max;
       }
       case 'in':
-        return Array.isArray(value) && value.includes(stockValue as string);
+        return Array.isArray(value) && (value as (string | number)[]).includes(stockValue as string | number);
       case 'notIn':
-        return Array.isArray(value) && !value.includes(stockValue as string);
+        return Array.isArray(value) && !(value as (string | number)[]).includes(stockValue as string | number);
       case 'contains':
         return typeof stockValue === 'string' && typeof value === 'string' && stockValue.toLowerCase().includes(value.toLowerCase());
       default:
