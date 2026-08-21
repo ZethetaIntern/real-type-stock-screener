@@ -14,6 +14,7 @@ import { Stock } from '@/types/stock';
 import { useStockStore } from '@/stores/stockStore';
 import clsx from 'clsx';
 import { useState } from 'react';
+import SimpleBar from 'simplebar-react';
 import {
   PriceCell,
   ChangeCell,
@@ -249,86 +250,88 @@ function DataGridComponent({ stocks, onRowClick }: DataGridProps) {
 
   return (
     <div className="flex flex-col h-full">
-      <div
-        ref={tableContainerRef}
-        className="flex-1 overflow-auto border border-gray-800 rounded-lg"
-        role="grid"
-        aria-label="Stock Screener Results"
-        aria-rowcount={rows.length}
-      >
-        <table className="w-full">
-          <thead className="sticky top-0 z-10 bg-gray-900">
-            {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <th
-                    key={header.id}
-                    className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-gray-400 border-b border-gray-800 cursor-pointer hover:bg-gray-800 transition-colors"
-                    style={{ width: header.getSize() }}
-                    onClick={header.column.getToggleSortingHandler()}
-                    role="columnheader"
-                    aria-sort={
-                      header.column.getIsSorted()
-                        ? header.column.getIsSorted() === 'asc'
-                          ? 'ascending'
-                          : 'descending'
-                        : 'none'
-                    }
-                  >
-                    <div className="flex items-center gap-2">
-                      {flexRender(header.column.columnDef.header, header.getContext())}
-                      {header.column.getIsSorted() === 'asc' && (
-                        <span className="text-blue-500">↑</span>
-                      )}
-                      {header.column.getIsSorted() === 'desc' && (
-                        <span className="text-blue-500">↓</span>
-                      )}
-                    </div>
-                  </th>
-                ))}
-              </tr>
-            ))}
-          </thead>
-          <tbody>
-            {paddingTop > 0 && (
-              <tr>
-                <td style={{ height: `${paddingTop}px` }} />
-              </tr>
-            )}
-            {virtualRows.map((virtualRow) => {
-              const row = rows[virtualRow.index];
-              const isSelected = row.original.symbol === selectedSymbol;
-              return (
-                <tr
-                  key={row.id}
-                  className={clsx(
-                    'border-b border-gray-900 cursor-pointer transition-colors',
-                    isSelected ? 'bg-blue-900/30' : 'hover:bg-gray-900'
-                  )}
-                  onClick={() => handleRowClick(row.original)}
-                  role="row"
-                  aria-rowindex={virtualRow.index + 2}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <td
-                      key={cell.id}
-                      className="py-2 px-4 text-sm"
-                      role="gridcell"
+      <SimpleBar className="flex-1" style={{ maxHeight: '100%' }}>
+        <div
+          ref={tableContainerRef}
+          className="flex-1 overflow-auto"
+          role="grid"
+          aria-label="Stock Screener Results"
+          aria-rowcount={rows.length}
+        >
+          <table className="w-full">
+            <thead className="sticky top-0 z-10 bg-gray-900">
+              {table.getHeaderGroups().map((headerGroup) => (
+                <tr key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <th
+                      key={header.id}
+                      className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-gray-400 border-b border-gray-800 cursor-pointer hover:bg-gray-800 transition-colors"
+                      style={{ width: header.getSize() }}
+                      onClick={header.column.getToggleSortingHandler()}
+                      role="columnheader"
+                      aria-sort={
+                        header.column.getIsSorted()
+                          ? header.column.getIsSorted() === 'asc'
+                            ? 'ascending'
+                            : 'descending'
+                          : 'none'
+                      }
                     >
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </td>
+                      <div className="flex items-center gap-2">
+                        {flexRender(header.column.columnDef.header, header.getContext())}
+                        {header.column.getIsSorted() === 'asc' && (
+                          <span className="text-blue-500">↑</span>
+                        )}
+                        {header.column.getIsSorted() === 'desc' && (
+                          <span className="text-blue-500">↓</span>
+                        )}
+                      </div>
+                    </th>
                   ))}
                 </tr>
-              );
-            })}
-            {paddingBottom > 0 && (
-              <tr>
-                <td style={{ height: `${paddingBottom}px` }} />
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+              ))}
+            </thead>
+            <tbody>
+              {paddingTop > 0 && (
+                <tr>
+                  <td style={{ height: `${paddingTop}px` }} />
+                </tr>
+              )}
+              {virtualRows.map((virtualRow) => {
+                const row = rows[virtualRow.index];
+                const isSelected = row.original.symbol === selectedSymbol;
+                return (
+                  <tr
+                    key={row.id}
+                    className={clsx(
+                      'border-b border-gray-900 cursor-pointer transition-colors',
+                      isSelected ? 'bg-blue-900/30' : 'hover:bg-gray-900'
+                    )}
+                    onClick={() => handleRowClick(row.original)}
+                    role="row"
+                    aria-rowindex={virtualRow.index + 2}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <td
+                        key={cell.id}
+                        className="py-2 px-4 text-sm"
+                        role="gridcell"
+                      >
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })}
+              {paddingBottom > 0 && (
+                <tr>
+                  <td style={{ height: `${paddingBottom}px` }} />
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </SimpleBar>
     </div>
   );
 }

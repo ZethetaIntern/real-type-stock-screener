@@ -1,0 +1,90 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@import 'simplebar-react/dist/simplebar.min.css';
+
+:root {
+  --background: #0a0a0a;
+  --foreground: #fafafa;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+}
+
+/* SimpleBar Custom Styling */
+.simplebar-scrollbar::before {
+  background-color: rgba(100, 116, 139, 0.5);
+  border-radius: 4px;
+}
+
+.simplebar-scrollbar.simplebar-visible::before {
+  opacity: 1;
+}
+
+.simplebar-track.simplebar-vertical {
+  width: 8px;
+  right: 2px;
+}
+
+.simplebar-track.simplebar-horizontal {
+  height: 8px;
+  bottom: 2px;
+}
+
+.simplebar-scrollbar.simplebar-vertical {
+  top: 2px;
+  bottom: 2px;
+}
+
+.simplebar-scrollbar.simplebar-horizontal {
+  left: 2px;
+  right: 2px;
+}
+
+/* Glass morphism effect */
+.glass {
+  background: rgba(17, 24, 39, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(55, 65, 81, 0.5);
+}
+
+/* Gradient header */
+.header-gradient {
+  background: linear-gradient(135deg, #111827 0%, #1e293b 100%);
+  border-bottom: 1px solid rgba(55, 65, 81, 0.5);
+}
+
+/* Card styling */
+.card {
+  background: rgba(17, 24, 39, 0.6);
+  border: 1px solid rgba(55, 65, 81, 0.4);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.card:hover {
+  border-color: rgba(99, 102, 241, 0.3);
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.1);
+}
+
+/* Smooth scrollbar for non-SimpleBar elements */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.4);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.6);
+}
