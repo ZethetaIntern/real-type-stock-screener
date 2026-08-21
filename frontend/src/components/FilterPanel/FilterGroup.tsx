@@ -13,10 +13,10 @@ export function FilterGroup({ title, children, defaultOpen = false }: FilterGrou
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className="border-b border-gray-800">
+    <div className="border-b border-gray-200 dark:border-gray-800">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-between w-full px-4 py-3 text-sm font-semibold text-gray-300 hover:bg-gray-800 transition-colors"
+        className="flex items-center justify-between w-full px-4 py-3 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
       >
         {title}
         <ChevronDown size={16} className={clsx('transition-transform', isOpen && 'rotate-180')} />

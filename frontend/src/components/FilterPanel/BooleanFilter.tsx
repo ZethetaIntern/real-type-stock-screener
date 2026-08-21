@@ -10,12 +10,12 @@ interface BooleanFilterProps {
 export function BooleanFilter({ label, value, onChange }: BooleanFilterProps) {
   return (
     <label className="flex items-center justify-between cursor-pointer">
-      <span className="text-sm text-gray-300">{label}</span>
+      <span className="text-sm text-gray-700 dark:text-gray-300">{label}</span>
       <div
         onClick={() => onChange(!value)}
         className={clsx(
           'w-10 h-6 rounded-full transition-colors relative',
-          value ? 'bg-brand-600' : 'bg-gray-700'
+          value ? 'bg-brand-600' : 'bg-gray-300 dark:bg-gray-700'
         )}
       >
         <div

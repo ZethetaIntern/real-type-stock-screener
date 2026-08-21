@@ -259,13 +259,13 @@ function DataGridComponent({ stocks, onRowClick }: DataGridProps) {
           aria-rowcount={rows.length}
         >
           <table className="w-full">
-            <thead className="sticky top-0 z-10 bg-gray-900">
+            <thead className="sticky top-0 z-10 bg-gray-100 dark:bg-gray-900">
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (
                     <th
                       key={header.id}
-                      className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-gray-400 border-b border-gray-800 cursor-pointer hover:bg-gray-800 transition-colors"
+                      className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-800 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
                       style={{ width: header.getSize() }}
                       onClick={header.column.getToggleSortingHandler()}
                       role="columnheader"
@@ -304,8 +304,8 @@ function DataGridComponent({ stocks, onRowClick }: DataGridProps) {
                   <tr
                     key={row.id}
                     className={clsx(
-                      'border-b border-gray-900 cursor-pointer transition-colors',
-                      isSelected ? 'bg-blue-900/30' : 'hover:bg-gray-900'
+                      'border-b border-gray-100 dark:border-gray-900 cursor-pointer transition-colors',
+                      isSelected ? 'bg-blue-100 dark:bg-blue-900/30' : 'hover:bg-gray-50 dark:hover:bg-gray-900'
                     )}
                     onClick={() => handleRowClick(row.original)}
                     role="row"

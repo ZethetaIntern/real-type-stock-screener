@@ -4,6 +4,11 @@
 @import 'simplebar-react/dist/simplebar.min.css';
 
 :root {
+  --background: #ffffff;
+  --foreground: #111827;
+}
+
+.dark {
   --background: #0a0a0a;
   --foreground: #fafafa;
 }
@@ -45,24 +50,39 @@ body {
 
 /* Glass morphism effect */
 .glass {
-  background: rgba(17, 24, 39, 0.8);
+  background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(229, 231, 235, 0.5);
+}
+
+.dark .glass {
+  background: rgba(17, 24, 39, 0.8);
   border: 1px solid rgba(55, 65, 81, 0.5);
 }
 
 /* Gradient header */
 .header-gradient {
+  background: linear-gradient(135deg, #f9fafb 0%, #e5e7eb 100%);
+  border-bottom: 1px solid rgba(229, 231, 235, 0.5);
+}
+
+.dark .header-gradient {
   background: linear-gradient(135deg, #111827 0%, #1e293b 100%);
   border-bottom: 1px solid rgba(55, 65, 81, 0.5);
 }
 
 /* Card styling */
 .card {
-  background: rgba(17, 24, 39, 0.6);
-  border: 1px solid rgba(55, 65, 81, 0.4);
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(229, 231, 235, 0.4);
   border-radius: 12px;
   transition: all 0.2s ease;
+}
+
+.dark .card {
+  background: rgba(17, 24, 39, 0.6);
+  border: 1px solid rgba(55, 65, 81, 0.4);
 }
 
 .card:hover {

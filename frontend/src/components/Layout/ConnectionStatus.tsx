@@ -17,7 +17,7 @@ export function ConnectionStatus({ status }: ConnectionStatusProps) {
           status === 'disconnected' && 'bg-negative'
         )}
       />
-      <span className="text-xs text-gray-500 capitalize">{status}</span>
+      <span className="text-xs text-gray-400 dark:text-gray-500 capitalize">{status}</span>
     </div>
   );
 }

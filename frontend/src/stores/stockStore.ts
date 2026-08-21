@@ -46,6 +46,10 @@ interface StockStore {
   chartOpen: boolean;
   setChartOpen: (open: boolean) => void;
 
+  // Theme
+  theme: 'dark' | 'light';
+  toggleTheme: () => void;
+
   // Performance tracking
   filterExecutionTime: number;
   setFilterExecutionTime: (time: number) => void;
@@ -121,13 +125,20 @@ export const useStockStore = create<StockStore>()(
         chartOpen: false,
         setChartOpen: (open) => set({ chartOpen: open }),
 
+        // Theme
+        theme: 'dark',
+        toggleTheme: () =>
+          set((state) => {
+            state.theme = state.theme === 'dark' ? 'light' : 'dark';
+          }),
+
         // Performance tracking
         filterExecutionTime: 0,
         setFilterExecutionTime: (time) => set({ filterExecutionTime: time }),
       })),
       {
         name: 'stock-store',
-        partialize: (state) => ({ watchlist: state.watchlist }),
+        partialize: (state) => ({ watchlist: state.watchlist, theme: state.theme }),
       }
     ),
     { name: 'stock-store' }
