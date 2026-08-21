@@ -1,7 +1,11 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
+import { enableMapSet } from 'immer';
 import { devtools, persist } from 'zustand/middleware';
 import { Stock, FilterConfig, SortConfig, PriceUpdate, ConnectionStatus } from '@/types/stock';
+
+// Enable Map and Set support in Immer
+enableMapSet();
 
 interface StockStore {
   // Stock data
