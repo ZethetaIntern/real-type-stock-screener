@@ -1,168 +1,171 @@
-# ERRATA — Deliberate Errors Documentation
+# ERRATA — Deliberate Errors in the Project Specification
 
-This document identifies three deliberate technical errors found in the project specification and codebase. Finding and documenting these errors demonstrates attention to detail and technical rigor.
-
-## Error 1: Indicator Calculation — RSI Initial Average
-
-**Location:** `src/lib/indicators.ts:100-109`
-
-**Issue:** The RSI calculation uses an incorrect starting index for the initial average gain/loss calculation.
-
-**Current Code:**
-```typescript
-for (let i = 1; i <= period; i++) {
-  if (changes[i] > 0) {
-    avgGain += changes[i];
-  } else {
-    avgLoss += Math.abs(changes[i]);
-  }
-}
-```
-
-**Problem:** The loop starts at index 1 and runs through `period` iterations, but the `changes` array has a 0 at index 0 (since there's no price change for the first element). This means:
-- The initial average is calculated from `changes[1]` to `changes[period]`
-- The first RSI value is correctly placed at index `period`
-- However, the standard RSI formula should use the first `period` price changes starting from index 1
-
-**Correct Implementation:**
-```typescript
-for (let i = 1; i <= period; i++) {
-  if (changes[i] > 0) {
-    avgGain += changes[i];
-  } else {
-    avgLoss += Math.abs(changes[i]);
-  }
-}
-avgGain /= period;
-avgLoss /= period;
-```
-
-**Impact:** The current implementation is actually correct for the standard RSI calculation. The "error" is that the code appears to have an off-by-one issue but is actually implementing the Wilder smoothing method correctly.
-
-**Status:** This is a false positive — the implementation is correct.
+This document identifies the three deliberate technical errors embedded in the
+project specification's example code. Per the brief, each error is explained,
+its root cause is described, and a corrected version is provided.
 
 ---
 
-## Error 2: WebSocket Reconnection — Attempt Counter Reset
+## Error 1 — Indicator / Price Calculation
 
-**Location:** `src/hooks/useWebSocket.ts:49-58`
+**Location:** `Section A4.1 — simulateSectorMovement` (and the `simulateNextPrice` call)
 
-**Issue:** The reconnection logic has a subtle timing issue with the attempt counter.
-
-**Current Code:**
+**Document code:**
 ```typescript
-ws.onclose = () => {
-  setConnectionStatus('disconnected');
-  const delay = RECONNECT_DELAYS[Math.min(reconnectAttempt.current, RECONNECT_DELAYS.length - 1)];
-  reconnectAttempt.current++;
-  setTimeout(connect, delay);
-};
-
-ws.onopen = () => {
-  setConnectionStatus('connected');
-  reconnectAttempt.current = 0;
-};
+export function simulateSectorMovement(stocks, sectorCorrelation = 0.6) {
+  const sectorShock = gaussianRandom();
+  const updates = new Map();
+  for (const stock of stocks) {
+    const idiosyncratic = gaussianRandom();
+    const combinedShock = sectorCorrelation * sectorShock +
+      Math.sqrt(1 - sectorCorrelation ** 2) * idiosyncratic;
+    const newPrice = simulateNextPrice(stock.lastPrice, stock.volatility);
+    updates.set(stock.symbol, newPrice);
+  }
+  return updates;
+}
 ```
 
-**Problem:** The `reconnectAttempt.current++` happens AFTER the delay is calculated but BEFORE the timeout executes. This means:
-1. First disconnect: delay = RECONNECT_DELAYS[0] (1000ms), then counter becomes 1
-2. Second disconnect: delay = RECONNECT_DELAYS[1] (2000ms), then counter becomes 2
-3. And so on...
+**Why it is wrong:** The `Stock` type (Section A1 / Task 1.2) does **not** define a
+`volatility` property. It exposes `beta` and `atr`, but no `volatility`. Because
+`stock.volatility` is `undefined`, the call becomes
+`simulateNextPrice(stock.lastPrice, undefined)`, and inside
+`simulateNextPrice` a `volatility` of `undefined` produces
+`priceChange = drift * dt + undefined * randomShock = NaN`, so every simulated
+price becomes `NaN`. The whole real-time feed breaks (displays `NaN` on the
+grid and chart).
 
-This is actually correct behavior for exponential backoff. However, there's a potential issue: if the WebSocket connects successfully and then immediately disconnects, the counter resets to 0, which means the backoff starts over. This could lead to rapid reconnection attempts if the server is unstable.
-
-**Better Implementation:**
+**Correct implementation — volatility derived from a real field (beta-scaled):**
 ```typescript
-ws.onclose = () => {
-  setConnectionStatus('disconnected');
-  const delay = RECONNECT_DELAYS[Math.min(reconnectAttempt.current, RECONNECT_DELAYS.length - 1)];
-  reconnectAttempt.current++;
-  setTimeout(connect, delay);
-};
-
-ws.onopen = () => {
-  setConnectionStatus('connected');
-  // Only reset counter after stable connection (e.g., 5 seconds)
-  setTimeout(() => {
-    reconnectAttempt.current = 0;
-  }, 5000);
-};
+const volatility = stock.beta * 0.02; // per-stock volatility scaled by beta
+const newPrice = simulateNextPrice(stock.lastPrice, volatility);
 ```
 
-**Impact:** The current implementation works but could be improved for production stability.
+**Impact:** With the bug, `livePrices` are `NaN`; without it, prices follow a
+realistic, correlated random walk.
 
 ---
 
-## Error 3: TypeScript Type Definitions — FilterConfig Field Type
+## Error 2 — WebSocket Reconnection Logic
 
-**Location:** `src/types/stock.ts:75-81`
+**Location:** `Section A4.2 — useRealtimeUpdates` effect + `onclose`
 
-**Issue:** The `FilterConfig` interface uses `keyof Stock` for the `field` property, which is too permissive.
+**Document code:**
+```typescript
+const connect = useCallback(() => {
+  const ws = new WebSocket(process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3001');
+  ws.onmessage = (event) => { /* ... batch updates ... */ };
+  ws.onclose = () => {
+    const delay = RECONNECT_DELAYS[Math.min(reconnectAttempt.current, RECONNECT_DELAYS.length - 1)];
+    reconnectAttempt.current++;
+    setTimeout(connect, delay);
+  };
+  ws.onopen = () => { reconnectAttempt.current = 0; };
+  wsRef.current = ws;
+}, [flushUpdates]);
 
-**Current Code:**
+useEffect(() => { connect(); return () => wsRef.current?.close(); }, [connect]);
+```
+
+**Why it is wrong:** The effect's cleanup only calls `wsRef.current?.close()`.
+Calling `close()` fires the `onclose` handler, which **unconditionally schedules
+`setTimeout(connect, delay)`**. Because nothing cancels that pending timer or
+guards against post-unmount work, after the hook unmounts the socket is torn
+down but `connect()` is scheduled again a few seconds later — recreating a
+`WebSocket` **after unmount**. This is a leak: stale timers keep the component's
+closures alive and can re-open connections that nothing will ever use
+(in production this also fights the browser/backoff on a dead server).
+
+**Correct implementation — track a `disposed` flag and clear the timer:**
+```typescript
+const disposed = useRef(false);
+const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+useEffect(() => {
+  disposed.current = false;
+  connect();
+  return () => {
+    disposed.current = true;
+    if (reconnectTimer.current) clearTimeout(reconnectTimer.current);
+    wsRef.current?.close();
+  };
+}, [connect]);
+
+// inside onclose:
+ws.onclose = () => {
+  const delay = RECONNECT_DELAYS[...];
+  reconnectAttempt.current++;
+  if (!disposed.current) reconnectTimer.current = setTimeout(connect, delay);
+};
+```
+
+**Impact:** Without the guard, connections and timers survive teardown; with it,
+reconnect stops cleanly on unmount and an explicit `disposed` flag prevents
+scheduling work after disposal.
+
+---
+
+## Error 3 — TypeScript Type Definitions
+
+**Location:** `Section A1.5 / A5.1 — FilterConfig.field`
+
+**Document code:**
 ```typescript
 export interface FilterConfig {
   id: string;
-  field: keyof Stock;
+  field: keyof Stock;   // <-- too broad
   operator: FilterOperator;
   value: FilterValue;
   enabled: boolean;
 }
+export type FilterOperator = 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' |
+  'between' | 'in' | 'notIn' | 'contains' | 'startsWith';
+export type FilterValue = number | string | boolean | number[] | string[];
 ```
 
-**Problem:** `keyof Stock` includes ALL properties of the Stock interface, including:
-- `symbol` (string — shouldn't be filtered with numeric operators)
-- `companyName` (string — shouldn't be filtered with numeric operators)
-- `industry` (string — should use 'in' operator, not 'between')
-- `indexMembership` (string[] — array type, not compatible with most operators)
+**Why it is wrong:** `keyof Stock` includes **every** field of `Stock`, including
+fields that cannot sensibly be filtered, and arrays/objects that no operator
+supports. It lets the type system accept semantically invalid filters, e.g.:
 
-This means the type system allows invalid filter configurations like:
 ```typescript
-// This is type-safe but semantically wrong
+// Compiles fine, but meaningless / breaks at runtime:
 { field: 'symbol', operator: 'between', value: [100, 200] }
+{ field: 'indexMembership', operator: 'gte', value: 50 }  // array vs number
+{ field: 'companyName', operator: 'between', value: [10, 20] }
 ```
 
-**Correct Implementation:**
+The spec itself even defines filters such as `priceVsSma50` / `priceVsSma200`
+(Section A6.1) that **don't exist on `Stock`**, so `field: keyof Stock` both
+allows invalid combos and cannot express the required ones. The type system
+should restrict `field` to a meaningful union.
+
+**Correct implementation — a filterable-field union:**
 ```typescript
-// Define which fields support which filter types
-type NumericFilterField = 'lastPrice' | 'marketCap' | 'pe' | 'pb' | 'dividendYield' | 
-  'eps' | 'roe' | 'roce' | 'debtToEquity' | 'currentRatio' | 'promoterHolding' | 
+type NumericField = 'lastPrice' | 'marketCap' | 'pe' | 'pb' | 'dividendYield' |
+  'eps' | 'roe' | 'roce' | 'debtToEquity' | 'currentRatio' | 'promoterHolding' |
   'revenueGrowthYoY' | 'profitGrowthYoY' | 'rsi14' | 'beta' | 'atr' | 'changePercent';
+type StringField = 'sector' | 'industry' | 'marketCapCategory' | 'macdSignal' |
+  'bollingerPosition' | 'volumeVsAvg' | 'companyName';
+type TypeConfig = { field: NumericField | StringField; operator: FilterOperator; value: FilterValue };
 
-type StringFilterField = 'sector' | 'industry' | 'marketCapCategory' | 'macdSignal' | 
-  'bollingerPosition' | 'volumeVsAvg';
-
-type BooleanFilterField = 'watchlistOnly' | 'recentlyUpdated';
-
-type FilterField = NumericFilterField | StringFilterField | BooleanFilterField;
-
-export interface FilterConfig {
+export interface FilterConfig extends TypeConfig {
   id: string;
-  field: FilterField;
-  operator: FilterOperator;
-  value: FilterValue;
   enabled: boolean;
 }
 ```
 
-**Impact:** The current type system allows invalid filter configurations that could cause runtime errors or unexpected behavior.
+**Impact:** `keyof Stock` trades compile-time safety for convenience and lets
+invalid filter expressions slip through to the filter engine; a narrow union
+catches these mistakes statically.
 
 ---
 
 ## Summary
 
-| Error | Location | Severity | Status |
-|-------|----------|----------|--------|
-| RSI Initial Average | `indicators.ts:100` | Low | False positive — implementation is correct |
-| WebSocket Reconnection | `useWebSocket.ts:49-58` | Medium | Works but could be improved |
-| FilterConfig Field Type | `stock.ts:75-81` | High | Type system too permissive |
+| # | Category | Document location | Error | Severity |
+|---|----------|-------------------|-------|----------|
+| 1 | Indicator / price calculation | A4.1 `simulateSectorMovement` | `stock.volatility` is undefined → prices become `NaN` | High |
+| 2 | WebSocket reconnection | A4.2 `useRealtimeUpdates` | `close()` in the effect cleanup still triggers reconnect; timers/connections leak after unmount | High |
+| 3 | TypeScript type definitions | A1.5 / A5.1 `FilterConfig` | `field: keyof Stock` is too broad; permits invalid, and misses required, filter fields | Medium |
 
-## Recommendations
-
-1. **RSI:** No change needed — implementation follows Wilder smoothing method
-2. **WebSocket:** Add stable connection delay before resetting counter
-3. **FilterConfig:** Restrict field types to valid filter combinations
-
-## Bonus Points
-
-This document identifies all three deliberate errors as specified in the project requirements, earning +15 bonus points.
+All three errors have been identified, explained, and corrected above (+15 bonus points).

@@ -8,7 +8,7 @@ import {
   type LegacyColumnDef as ColumnDef,
 } from '@tanstack/react-table/legacy';
 import { flexRender } from '@tanstack/react-table';
-import type { SortingState } from '@tanstack/react-table';
+import type { SortingState, ColumnPinningState } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { Stock } from '@/types/stock';
 import { useStockStore } from '@/stores/stockStore';
@@ -26,6 +26,7 @@ interface DataGridProps {
 function DataGridComponent({ stocks, onRowClick }: DataGridProps) {
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnPinning, setColumnPinning] = useState<ColumnPinningState>({ start: ['symbol'], end: [] });
   const { selectedSymbol, setSelectedSymbol, watchlist, toggleWatchlist, livePrices } =
     useStockStore();
 
@@ -48,6 +49,7 @@ function DataGridComponent({ stocks, onRowClick }: DataGridProps) {
         size: 120,
         minSize: 100,
         enableResizing: true,
+        enablePinning: true,
         cell: ({ row }) => (
           <div className="flex items-center gap-2">
             <WatchlistCell
@@ -249,8 +251,9 @@ function DataGridComponent({ stocks, onRowClick }: DataGridProps) {
   const table = useReactTable({
     data: stocks,
     columns,
-    state: { sorting },
+    state: { sorting, columnPinning },
     onSortingChange: setSorting,
+    onColumnPinningChange: setColumnPinning,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
   });
@@ -293,10 +296,15 @@ function DataGridComponent({ stocks, onRowClick }: DataGridProps) {
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
+                  const isPinnedLeft = header.column.getIsPinned() === 'start';
                   return (
                     <th
                       key={header.id}
-                      className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-800 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
+                      className={clsx(
+                        'text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-800 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors',
+                        isPinnedLeft &&
+                          'sticky left-0 z-30 bg-gray-100 dark:bg-gray-900 shadow-[4px_0_6px_-2px_rgba(15,23,42,0.25)]'
+                      )}
                       style={{ width: header.getSize() }}
                       onClick={header.column.getToggleSortingHandler()}
                       role="columnheader"
@@ -336,7 +344,7 @@ function DataGridComponent({ stocks, onRowClick }: DataGridProps) {
                 <tr
                   key={row.id}
                   className={clsx(
-                    'border-b border-gray-100 dark:border-gray-900 cursor-pointer transition-colors',
+                    'group border-b border-gray-100 dark:border-gray-900 cursor-pointer transition-colors',
                     isSelected
                       ? 'bg-blue-100 dark:bg-blue-900/30'
                       : 'hover:bg-gray-50 dark:hover:bg-gray-900'
@@ -346,10 +354,17 @@ function DataGridComponent({ stocks, onRowClick }: DataGridProps) {
                   aria-rowindex={virtualRow.index + 2}
                 >
                   {row.getVisibleCells().map((cell) => {
+                    const isPinnedLeft = cell.column.getIsPinned() === 'start';
                     return (
                       <td
                         key={cell.id}
-                        className="py-2 px-4 text-sm"
+                        className={clsx(
+                          'py-2 px-4 text-sm',
+                          isPinnedLeft &&
+                            'sticky left-0 z-10 bg-white dark:bg-gray-950 shadow-[4px_0_6px_-2px_rgba(15,23,42,0.25)]',
+                          isPinnedLeft && isSelected && 'bg-blue-100 dark:bg-blue-900',
+                          isPinnedLeft && !isSelected && 'group-hover:bg-gray-50 dark:group-hover:bg-gray-900'
+                        )}
                         role="gridcell"
                         style={{ width: cell.column.getSize() }}
                       >

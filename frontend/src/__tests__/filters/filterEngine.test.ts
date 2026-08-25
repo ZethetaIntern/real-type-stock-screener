@@ -75,6 +75,48 @@ describe('filterStocks', () => {
     expect(result).toHaveLength(2);
   });
 
+  it('filters by notIn and contains', () => {
+    const stocks = [
+      makeStock({ sector: 'IT' }),
+      makeStock({ sector: 'Banking' }),
+      makeStock({ sector: 'Pharma' }),
+      makeStock({ sector: 'FMCG', companyName: 'Tata Consultancy' }),
+      makeStock({ sector: 'Auto', companyName: 'Wipro' }),
+    ];
+    const notInFilter: FilterConfig[] = [{ id: '1', field: 'sector', operator: 'notIn', value: ['IT'], enabled: true }];
+    expect(filterStocks(stocks, notInFilter)).toHaveLength(4);
+
+    const containsFilter: FilterConfig[] = [{ id: '1', field: 'companyName', operator: 'contains', value: 'tata', enabled: true }];
+    const result = filterStocks(stocks, containsFilter);
+    expect(result).toHaveLength(1);
+    expect(result[0].companyName).toBe('Tata Consultancy');
+  });
+
+  it('handles neq, gt, lt and lte operators', () => {
+    const stocks = [makeStock({ pe: 10 }), makeStock({ pe: 20 }), makeStock({ pe: 30 }), makeStock({ pe: 40 })];
+    const neqFilter: FilterConfig[] = [{ id: '1', field: 'pe', operator: 'neq', value: 20, enabled: true }];
+    expect(filterStocks(stocks, neqFilter)).toHaveLength(3);
+
+    const gtFilter: FilterConfig[] = [{ id: '1', field: 'pe', operator: 'gt', value: 20, enabled: true }];
+    expect(filterStocks(stocks, gtFilter)).toHaveLength(2);
+
+    const ltFilter: FilterConfig[] = [{ id: '1', field: 'pe', operator: 'lt', value: 30, enabled: true }];
+    expect(filterStocks(stocks, ltFilter)).toHaveLength(2);
+
+    const lteFilter: FilterConfig[] = [{ id: '1', field: 'pe', operator: 'lte', value: 20, enabled: true }];
+    expect(filterStocks(stocks, lteFilter)).toHaveLength(2);
+  });
+
+  it('matches null values with eq of null', () => {
+    const stocks = [{ ...makeStock(), pe: null } as Stock, makeStock({ pe: 5 })];
+    const filters: FilterConfig[] = [
+      { id: '1', field: 'pe', operator: 'eq', value: null as unknown as number, enabled: true },
+    ];
+    const result = filterStocks(stocks, filters);
+    expect(result).toHaveLength(1);
+    expect(result[0].pe).toBeNull();
+  });
+
   it('skips disabled filters', () => {
     const stocks = [makeStock({ pe: 10 }), makeStock({ pe: 30 })];
     const filters: FilterConfig[] = [{ id: '1', field: 'pe', operator: 'gte', value: 20, enabled: false }];
@@ -142,5 +184,12 @@ describe('sortStocks', () => {
     const config: SortConfig = { column: 'marketCap', direction: 'desc' };
     const result = sortStocks(stocks, config);
     expect(result.map((s) => s.marketCap)).toEqual([300, 100]);
+  });
+
+  it('sorts by string with localeCompare and respects direction', () => {
+    const stocks = [makeStock({ symbol: 'b' }), makeStock({ symbol: 'A' }), makeStock({ symbol: 'c' })];
+    const config: SortConfig = { column: 'symbol', direction: 'desc' };
+    const result = sortStocks(stocks, config);
+    expect(result.map((s) => s.symbol)).toEqual(['c', 'b', 'A']);
   });
 });

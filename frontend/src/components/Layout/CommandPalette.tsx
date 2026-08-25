@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Search, Filter, BarChart3, Star, Sun, Moon, X } from 'lucide-react';
+import { Search, Filter, BarChart3, Star, Sun, Moon } from 'lucide-react';
 import { useStockStore } from '@/stores/stockStore';
 import { Stock } from '@/types/stock';
 

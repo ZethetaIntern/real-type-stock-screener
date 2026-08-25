@@ -56,6 +56,8 @@ export interface Stock {
   macdSignal: MacdSignal;
   bollingerPosition: BollingerPosition;
   volumeVsAvg: VolumeVsAvg;
+  watchlistOnly?: boolean;
+  recentlyUpdated?: boolean;
 }
 
 export interface OHLCV {

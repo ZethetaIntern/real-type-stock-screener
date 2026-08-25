@@ -3,12 +3,14 @@
 import { useMemo, useCallback } from 'react';
 import { useStockStore } from '@/stores/stockStore';
 import { filterStocks, sortStocks } from '@/lib/filterEngine';
-import { FilterConfig, SortConfig } from '@/types/stock';
+import { FilterConfig } from '@/types/stock';
 
 export function useFilterEngine() {
   const stocks = useStockStore((s) => s.stocks);
   const activeFilters = useStockStore((s) => s.activeFilters);
   const sortConfig = useStockStore((s) => s.sortConfig);
+  const watchlist = useStockStore((s) => s.watchlist);
+  const livePrices = useStockStore((s) => s.livePrices);
   const addFilter = useStockStore((s) => s.addFilter);
   const removeFilter = useStockStore((s) => s.removeFilter);
   const updateFilter = useStockStore((s) => s.updateFilter);
@@ -19,11 +21,16 @@ export function useFilterEngine() {
 
   const filteredStocks = useMemo(() => {
     const start = performance.now();
-    const result = filterStocks(stocks, activeFilters);
+    const enriched = stocks.map((stock) => ({
+      ...stock,
+      watchlistOnly: watchlist.has(stock.symbol),
+      recentlyUpdated: livePrices.has(stock.symbol),
+    }));
+    const result = filterStocks(enriched, activeFilters);
     const end = performance.now();
     setFilterExecutionTime(end - start);
     return result;
-  }, [stocks, activeFilters, setFilterExecutionTime]);
+  }, [stocks, activeFilters, watchlist, livePrices, setFilterExecutionTime]);
 
   const sortedStocks = useMemo(() => {
     return sortStocks(filteredStocks, sortConfig);

@@ -5,7 +5,6 @@ import {
   OHLCV,
   SECTORS,
   MARKET_CAP_CATEGORIES,
-  INDEX_MEMBERSHIP,
   MacdSignal,
   BollingerPosition,
   VolumeVsAvg,

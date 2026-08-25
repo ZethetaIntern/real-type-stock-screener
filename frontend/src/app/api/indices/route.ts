@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { INDEX_MEMBERSHIP } from '@/types/stock';
 
 const INDICES = [
   {

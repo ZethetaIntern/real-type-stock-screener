@@ -85,12 +85,29 @@ const mockStocks: Stock[] = [
 ];
 
 vi.mock('@/stores/stockStore', () => ({
-  useStockStore: () => ({
-    selectedSymbol: null,
-    setSelectedSymbol: vi.fn(),
-    watchlist: new Set(),
-    toggleWatchlist: vi.fn(),
-    livePrices: new Map(),
+  useStockStore: (selector?: (s: Record<string, unknown>) => unknown) => {
+    const state = {
+      selectedSymbol: null,
+      setSelectedSymbol: vi.fn(),
+      watchlist: new Set(),
+      toggleWatchlist: vi.fn(),
+      livePrices: new Map(),
+    };
+    return selector ? selector(state) : state;
+  },
+}));
+
+vi.mock('@tanstack/react-virtual', () => ({
+  useVirtualizer: (opts: { count: number }) => ({
+    getVirtualItems: () =>
+      Array.from({ length: opts.count }, (_, index) => ({
+        index,
+        start: index * 36,
+        size: 36,
+        end: (index + 1) * 36,
+        key: index,
+      })),
+    getTotalSize: () => opts.count * 36,
   }),
 }));
 

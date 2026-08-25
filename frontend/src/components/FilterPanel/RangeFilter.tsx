@@ -28,6 +28,7 @@ export function RangeFilter({ label, min, max, step = 1, value, onChange, unit }
         <input
           type="number"
           value={localMin}
+          step={step}
           onChange={(e) => { setLocalMin(Number(e.target.value)); debouncedChange(Number(e.target.value), localMax); }}
           className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded px-2 py-1 text-sm text-gray-900 dark:text-white"
           placeholder="Min"
@@ -36,6 +37,7 @@ export function RangeFilter({ label, min, max, step = 1, value, onChange, unit }
         <input
           type="number"
           value={localMax}
+          step={step}
           onChange={(e) => { setLocalMax(Number(e.target.value)); debouncedChange(localMin, Number(e.target.value)); }}
           className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded px-2 py-1 text-sm text-gray-900 dark:text-white"
           placeholder="Max"

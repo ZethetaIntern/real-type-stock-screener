@@ -282,7 +282,6 @@ function ChartComponent({ symbol, timeframe: initialTimeframe = '1M' }: ChartCom
     }
   }, [
     stock,
-    symbol,
     showSMA,
     showEMA,
     showBollinger,
@@ -377,7 +376,7 @@ function ChartComponent({ symbol, timeframe: initialTimeframe = '1M' }: ChartCom
     if (mainChartRef.current) {
       syncTimeScales(mainChartRef.current, rsiChart);
     }
-  }, [stock, symbol, showRSI, timeframe, livePrice, colors]);
+  }, [stock, showRSI, timeframe, livePrice, colors]);
 
   function syncTimeScales(chart1: IChartApi, chart2: IChartApi) {
     const sync = (source: IChartApi, target: IChartApi) => {
@@ -407,9 +406,6 @@ function ChartComponent({ symbol, timeframe: initialTimeframe = '1M' }: ChartCom
 
     const profile = calculateVolumeProfile(visibleCandles, 20);
     const maxVolume = Math.max(...profile.volumes, 1);
-
-    const priceRange =
-      profile.priceLevels.length > 1 ? profile.priceLevels[1] - profile.priceLevels[0] : 1;
 
     for (let i = 0; i < profile.priceLevels.length; i++) {
       const normalizedVol = profile.volumes[i] / maxVolume;
@@ -476,7 +472,7 @@ function ChartComponent({ symbol, timeframe: initialTimeframe = '1M' }: ChartCom
       low: livePrice.price * 0.999,
       close: livePrice.price,
     });
-  }, [livePrices, symbol]);
+  }, [livePrice]);
 
   const currentPrice = livePrice?.price ?? stock?.lastPrice ?? 0;
   const change = livePrice?.change ?? stock?.changeAbsolute ?? 0;
