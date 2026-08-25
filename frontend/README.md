@@ -85,7 +85,7 @@ A production-grade stock screener application built with Next.js 14, React 18, a
 
 ```bash
 # Clone the repository
-git clone https://github.com/Mahima0824/real-type-stock-screener.git
+git clone https://github.com/ZethetaIntern/real-type-stock-screener.git
 cd real-type-stock-screener/frontend
 
 # Install dependencies
