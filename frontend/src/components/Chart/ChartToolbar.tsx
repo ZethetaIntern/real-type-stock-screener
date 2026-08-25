@@ -39,7 +39,9 @@ export default function ChartToolbar({
         <button
           onClick={onToggleSMA}
           className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-            showSMA ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+            showSMA
+              ? 'bg-blue-600 text-white'
+              : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
           }`}
         >
           SMA (20, 50)
@@ -47,7 +49,9 @@ export default function ChartToolbar({
         <button
           onClick={onToggleEMA}
           className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-            showEMA ? 'bg-cyan-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+            showEMA
+              ? 'bg-blue-600 text-white'
+              : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
           }`}
         >
           EMA (12, 26)
@@ -55,7 +59,9 @@ export default function ChartToolbar({
         <button
           onClick={onToggleBollinger}
           className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-            showBollinger ? 'bg-purple-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+            showBollinger
+              ? 'bg-blue-600 text-white'
+              : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
           }`}
         >
           Bollinger Bands
@@ -63,7 +69,9 @@ export default function ChartToolbar({
         <button
           onClick={onToggleRSI}
           className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-            showRSI ? 'bg-violet-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+            showRSI
+              ? 'bg-blue-600 text-white'
+              : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
           }`}
         >
           RSI (14)
@@ -71,14 +79,16 @@ export default function ChartToolbar({
         <button
           onClick={onToggleVolumeProfile}
           className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-            showVolumeProfile ? 'bg-amber-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+            showVolumeProfile
+              ? 'bg-blue-600 text-white'
+              : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
           }`}
         >
           Volume Profile
         </button>
       </div>
 
-      <div className="flex gap-1 bg-gray-800 rounded p-0.5">
+      <div className="flex gap-1 bg-gray-200 rounded p-0.5 dark:bg-gray-800">
         {TIMEFRAMES.map((tf) => (
           <button
             key={tf}
@@ -86,7 +96,7 @@ export default function ChartToolbar({
             className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
               timeframe === tf
                 ? 'bg-blue-600 text-white'
-                : 'text-gray-400 hover:text-white hover:bg-gray-700'
+                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-300 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700'
             }`}
           >
             {tf}

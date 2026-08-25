@@ -25,6 +25,7 @@ export default function ScreenerPage() {
     selectedSymbol,
     setStocks,
     setSelectedSymbol,
+    setChartOpen,
     activeFilters,
   } = useStockStore();
   const { stocks, filteredCount, totalCount, filterExecutionTime } = useStockScreener();
@@ -153,7 +154,13 @@ export default function ScreenerPage() {
               )}
             >
               <ErrorBoundary name="Data Grid">
-                <DataGrid stocks={stocks} onRowClick={(stock) => setSelectedSymbol(stock.symbol)} />
+                <DataGrid
+                  stocks={stocks}
+                  onRowClick={(stock) => {
+                    setSelectedSymbol(stock.symbol);
+                    setChartOpen(true);
+                  }}
+                />
               </ErrorBoundary>
             </div>
 

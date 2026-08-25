@@ -13,7 +13,6 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { Stock } from '@/types/stock';
 import { useStockStore } from '@/stores/stockStore';
 import clsx from 'clsx';
-import SimpleBar from 'simplebar-react';
 import { PriceCell, ChangeCell, VolumeCell, MarketCapCell, RSICell, WatchlistCell } from './cells';
 
 const ROW_HEIGHT = 36;
@@ -30,6 +29,17 @@ function DataGridComponent({ stocks, onRowClick }: DataGridProps) {
   const { selectedSymbol, setSelectedSymbol, watchlist, toggleWatchlist, livePrices } =
     useStockStore();
 
+  // Ensure watchlist is always a valid Set (handles corrupted persisted state)
+  const safeWatchlist = useMemo(() => {
+    if (watchlist instanceof Set) {
+      return watchlist;
+    }
+    if (Array.isArray(watchlist)) {
+      return new Set(watchlist);
+    }
+    return new Set<string>();
+  }, [watchlist]);
+
   const columns = useMemo<ColumnDef<Stock>[]>(
     () => [
       {
@@ -42,7 +52,7 @@ function DataGridComponent({ stocks, onRowClick }: DataGridProps) {
           <div className="flex items-center gap-2">
             <WatchlistCell
               symbol={row.original.symbol}
-              isWatchlisted={watchlist.has(row.original.symbol)}
+              isWatchlisted={safeWatchlist.has(row.original.symbol)}
               onToggle={() => toggleWatchlist(row.original.symbol)}
             />
             <span className="font-mono font-semibold text-blue-500">{row.original.symbol}</span>
@@ -104,7 +114,7 @@ function DataGridComponent({ stocks, onRowClick }: DataGridProps) {
         cell: ({ getValue }) => {
           const val = getValue() as number | null;
           return (
-            <span className="font-mono tabular-nums text-gray-300">
+            <span className="font-mono tabular-nums text-gray-700 dark:text-gray-300">
               {val !== null ? val.toFixed(1) : 'N/A'}
             </span>
           );
@@ -117,7 +127,7 @@ function DataGridComponent({ stocks, onRowClick }: DataGridProps) {
         minSize: 60,
         enableResizing: true,
         cell: ({ getValue }) => (
-          <span className="font-mono tabular-nums text-gray-300">
+          <span className="font-mono tabular-nums text-gray-700 dark:text-gray-300">
             {(getValue() as number).toFixed(2)}
           </span>
         ),
@@ -129,7 +139,7 @@ function DataGridComponent({ stocks, onRowClick }: DataGridProps) {
         minSize: 80,
         enableResizing: true,
         cell: ({ getValue }) => (
-          <span className="px-2 py-1 bg-gray-800 rounded text-xs text-gray-300">
+          <span className="px-2 py-1 bg-gray-200 text-gray-700 rounded text-xs font-medium dark:bg-gray-800 dark:text-gray-300">
             {getValue() as string}
           </span>
         ),
@@ -149,7 +159,7 @@ function DataGridComponent({ stocks, onRowClick }: DataGridProps) {
         minSize: 60,
         enableResizing: true,
         cell: ({ getValue }) => (
-          <span className="font-mono tabular-nums text-gray-300">
+          <span className="font-mono tabular-nums text-gray-700 dark:text-gray-300">
             {(getValue() as number).toFixed(1)}%
           </span>
         ),
@@ -161,7 +171,7 @@ function DataGridComponent({ stocks, onRowClick }: DataGridProps) {
         minSize: 60,
         enableResizing: true,
         cell: ({ getValue }) => (
-          <span className="font-mono tabular-nums text-gray-300">
+          <span className="font-mono tabular-nums text-gray-700 dark:text-gray-300">
             {(getValue() as number).toFixed(1)}%
           </span>
         ),
@@ -173,7 +183,7 @@ function DataGridComponent({ stocks, onRowClick }: DataGridProps) {
         minSize: 60,
         enableResizing: true,
         cell: ({ getValue }) => (
-          <span className="font-mono tabular-nums text-gray-300">
+          <span className="font-mono tabular-nums text-gray-700 dark:text-gray-300">
             {(getValue() as number).toFixed(2)}
           </span>
         ),
@@ -185,7 +195,7 @@ function DataGridComponent({ stocks, onRowClick }: DataGridProps) {
         minSize: 60,
         enableResizing: true,
         cell: ({ getValue }) => (
-          <span className="font-mono tabular-nums text-gray-300">
+          <span className="font-mono tabular-nums text-gray-700 dark:text-gray-300">
             {(getValue() as number).toFixed(2)}%
           </span>
         ),
@@ -198,7 +208,12 @@ function DataGridComponent({ stocks, onRowClick }: DataGridProps) {
         enableResizing: true,
         cell: ({ getValue }) => {
           const val = getValue() as number;
-          const color = val > 1 ? 'text-negative' : val < 1 ? 'text-positive' : 'text-gray-300';
+          const color =
+            val > 1
+              ? 'text-negative'
+              : val < 1
+                ? 'text-positive'
+                : 'text-gray-700 dark:text-gray-300';
           return <span className={clsx('font-mono tabular-nums', color)}>{val.toFixed(2)}</span>;
         },
       },
@@ -228,7 +243,7 @@ function DataGridComponent({ stocks, onRowClick }: DataGridProps) {
         },
       },
     ],
-    [livePrices, watchlist, toggleWatchlist]
+    [livePrices, safeWatchlist, toggleWatchlist]
   );
 
   const table = useReactTable({
@@ -266,95 +281,93 @@ function DataGridComponent({ stocks, onRowClick }: DataGridProps) {
 
   return (
     <div className="flex flex-col h-full">
-      <SimpleBar className="flex-1" style={{ maxHeight: '100%' }}>
-        <div
-          ref={tableContainerRef}
-          className="flex-1 overflow-auto"
-          role="grid"
-          aria-label="Stock Screener Results"
-          aria-rowcount={rows.length}
-        >
-          <table className="w-full" style={{ width: table.getCenterTotalSize() }}>
-            <thead className="sticky top-0 z-10 bg-gray-100 dark:bg-gray-900">
-              {table.getHeaderGroups().map((headerGroup) => (
-                <tr key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => {
+      <div
+        ref={tableContainerRef}
+        className="flex-1 overflow-auto"
+        role="grid"
+        aria-label="Stock Screener Results"
+        aria-rowcount={rows.length}
+      >
+        <table className="w-full" style={{ minWidth: table.getCenterTotalSize() }}>
+          <thead className="sticky top-0 z-10 bg-gray-100 dark:bg-gray-900">
+            {table.getHeaderGroups().map((headerGroup) => (
+              <tr key={headerGroup.id}>
+                {headerGroup.headers.map((header) => {
+                  return (
+                    <th
+                      key={header.id}
+                      className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-800 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
+                      style={{ width: header.getSize() }}
+                      onClick={header.column.getToggleSortingHandler()}
+                      role="columnheader"
+                      aria-sort={
+                        header.column.getIsSorted()
+                          ? header.column.getIsSorted() === 'asc'
+                            ? 'ascending'
+                            : 'descending'
+                          : 'none'
+                      }
+                    >
+                      <div className="flex items-center gap-2">
+                        {flexRender(header.column.columnDef.header, header.getContext())}
+                        {header.column.getIsSorted() === 'asc' && (
+                          <span className="text-blue-500">↑</span>
+                        )}
+                        {header.column.getIsSorted() === 'desc' && (
+                          <span className="text-blue-500">↓</span>
+                        )}
+                      </div>
+                    </th>
+                  );
+                })}
+              </tr>
+            ))}
+          </thead>
+          <tbody>
+            {paddingTop > 0 && (
+              <tr>
+                <td style={{ height: `${paddingTop}px` }} />
+              </tr>
+            )}
+            {virtualRows.map((virtualRow) => {
+              const row = rows[virtualRow.index];
+              const isSelected = row.original.symbol === selectedSymbol;
+              return (
+                <tr
+                  key={row.id}
+                  className={clsx(
+                    'border-b border-gray-100 dark:border-gray-900 cursor-pointer transition-colors',
+                    isSelected
+                      ? 'bg-blue-100 dark:bg-blue-900/30'
+                      : 'hover:bg-gray-50 dark:hover:bg-gray-900'
+                  )}
+                  onClick={() => handleRowClick(row.original)}
+                  role="row"
+                  aria-rowindex={virtualRow.index + 2}
+                >
+                  {row.getVisibleCells().map((cell) => {
                     return (
-                      <th
-                        key={header.id}
-                        className="text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-800 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
-                        style={{ width: header.getSize() }}
-                        onClick={header.column.getToggleSortingHandler()}
-                        role="columnheader"
-                        aria-sort={
-                          header.column.getIsSorted()
-                            ? header.column.getIsSorted() === 'asc'
-                              ? 'ascending'
-                              : 'descending'
-                            : 'none'
-                        }
+                      <td
+                        key={cell.id}
+                        className="py-2 px-4 text-sm"
+                        role="gridcell"
+                        style={{ width: cell.column.getSize() }}
                       >
-                        <div className="flex items-center gap-2">
-                          {flexRender(header.column.columnDef.header, header.getContext())}
-                          {header.column.getIsSorted() === 'asc' && (
-                            <span className="text-blue-500">↑</span>
-                          )}
-                          {header.column.getIsSorted() === 'desc' && (
-                            <span className="text-blue-500">↓</span>
-                          )}
-                        </div>
-                      </th>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </td>
                     );
                   })}
                 </tr>
-              ))}
-            </thead>
-            <tbody>
-              {paddingTop > 0 && (
-                <tr>
-                  <td style={{ height: `${paddingTop}px` }} />
-                </tr>
-              )}
-              {virtualRows.map((virtualRow) => {
-                const row = rows[virtualRow.index];
-                const isSelected = row.original.symbol === selectedSymbol;
-                return (
-                  <tr
-                    key={row.id}
-                    className={clsx(
-                      'border-b border-gray-100 dark:border-gray-900 cursor-pointer transition-colors',
-                      isSelected
-                        ? 'bg-blue-100 dark:bg-blue-900/30'
-                        : 'hover:bg-gray-50 dark:hover:bg-gray-900'
-                    )}
-                    onClick={() => handleRowClick(row.original)}
-                    role="row"
-                    aria-rowindex={virtualRow.index + 2}
-                  >
-                    {row.getVisibleCells().map((cell) => {
-                      return (
-                        <td
-                          key={cell.id}
-                          className="py-2 px-4 text-sm"
-                          role="gridcell"
-                          style={{ width: cell.column.getSize() }}
-                        >
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                );
-              })}
-              {paddingBottom > 0 && (
-                <tr>
-                  <td style={{ height: `${paddingBottom}px` }} />
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </SimpleBar>
+              );
+            })}
+            {paddingBottom > 0 && (
+              <tr>
+                <td style={{ height: `${paddingBottom}px` }} />
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

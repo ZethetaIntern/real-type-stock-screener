@@ -138,7 +138,21 @@ export const useStockStore = create<StockStore>()(
       })),
       {
         name: 'stock-store',
-        partialize: (state) => ({ watchlist: state.watchlist, theme: state.theme }),
+        partialize: (state) => {
+          const watchlist = state.watchlist;
+          let serialized: string[] = [];
+          if (watchlist instanceof Set) {
+            serialized = [...watchlist];
+          } else if (Array.isArray(watchlist)) {
+            serialized = watchlist;
+          }
+          return { watchlist: serialized, theme: state.theme };
+        },
+        onRehydrateStorage: () => (state) => {
+          if (state && !(state.watchlist instanceof Set)) {
+            state.watchlist = new Set(Array.isArray(state.watchlist) ? state.watchlist : []);
+          }
+        },
       }
     ),
     { name: 'stock-store' }

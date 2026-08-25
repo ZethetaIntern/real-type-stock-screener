@@ -7,13 +7,9 @@ function formatMarketCap(num: number): string {
   return `₹${num.toFixed(2)}`;
 }
 
-export const MarketCapCell = memo(function MarketCapCell({
-  value,
-}: {
-  value: number;
-}) {
+export const MarketCapCell = memo(function MarketCapCell({ value }: { value: number }) {
   return (
-    <span className="font-mono tabular-nums text-gray-300">
+    <span className="font-mono tabular-nums text-gray-700 dark:text-gray-300">
       {formatMarketCap(value)}
     </span>
   );

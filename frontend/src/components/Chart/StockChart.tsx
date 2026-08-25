@@ -23,6 +23,7 @@ import {
   calculateVolumeProfile,
 } from '@/lib/indicators';
 import { OHLCV } from '@/types/stock';
+import clsx from 'clsx';
 import ChartToolbar, { Timeframe } from './ChartToolbar';
 import dynamic from 'next/dynamic';
 
@@ -34,6 +35,27 @@ const TIMEFRAME_DAYS: Record<Timeframe, number> = {
   '1Y': 252,
   '5Y': 1260,
 };
+
+// Extra history so indicators (SMA-50, EMA-26) have data to warm up on,
+// while the visible window stays limited to the selected timeframe.
+const WARMUP = 60;
+
+const CHART_THEME = {
+  dark: {
+    background: '#111827',
+    text: '#9ca3af',
+    grid: '#1f2937',
+    border: '#374151',
+    container: 'bg-gray-900',
+  },
+  light: {
+    background: '#ffffff',
+    text: '#374151',
+    grid: '#e5e7eb',
+    border: '#d1d5db',
+    container: 'bg-white border border-gray-200',
+  },
+} as const;
 
 const DynamicChart = dynamic(() => Promise.resolve({ default: ChartComponent }), {
   ssr: false,
@@ -63,9 +85,10 @@ function ChartComponent({ symbol, timeframe: initialTimeframe = '1M' }: ChartCom
   const [showVolumeProfile, setShowVolumeProfile] = useState(false);
   const [timeframe, setTimeframe] = useState<Timeframe>(initialTimeframe);
 
-  const { stocks, livePrices } = useStockStore();
+  const { stocks, livePrices, theme } = useStockStore();
   const stock = stocks.find((s) => s.symbol === symbol);
   const livePrice = livePrices.get(symbol);
+  const colors = theme === 'light' ? CHART_THEME.light : CHART_THEME.dark;
 
   const ohlcvData = useRef<OHLCV[]>([]);
   const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -75,7 +98,7 @@ function ChartComponent({ symbol, timeframe: initialTimeframe = '1M' }: ChartCom
 
     const price = livePrice?.price ?? stock.lastPrice;
     const days = TIMEFRAME_DAYS[timeframe];
-    ohlcvData.current = generateOHLCV(price, days, 0.02, stock.avgVolume20D);
+    ohlcvData.current = generateOHLCV(price, days + WARMUP, 0.02, stock.avgVolume20D);
 
     if (mainChartRef.current) {
       mainChartRef.current.remove();
@@ -84,18 +107,18 @@ function ChartComponent({ symbol, timeframe: initialTimeframe = '1M' }: ChartCom
 
     const chart = createChart(mainChartContainerRef.current, {
       width: mainChartContainerRef.current.clientWidth,
-      height: showRSI ? 350 : 500,
+      height: mainChartContainerRef.current.clientHeight || (showRSI ? 350 : 500),
       layout: {
-        textColor: '#9ca3af',
-        background: { color: '#111827' },
+        textColor: colors.text,
+        background: { color: colors.background },
       },
       grid: {
-        vertLines: { color: '#1f2937' },
-        horzLines: { color: '#1f2937' },
+        vertLines: { color: colors.grid },
+        horzLines: { color: colors.grid },
       },
       crosshair: { mode: CrosshairMode.Normal },
       timeScale: { timeVisible: true, secondsVisible: false },
-      rightPriceScale: { borderColor: '#374151' },
+      rightPriceScale: { borderColor: colors.border },
     });
 
     mainChartRef.current = chart;
@@ -140,17 +163,29 @@ function ChartComponent({ symbol, timeframe: initialTimeframe = '1M' }: ChartCom
       const sma20 = calculateSMA(closePrices, 20);
       const sma50 = calculateSMA(closePrices, 50);
 
-      const sma20Series = chart.addSeries(LineSeries, { color: '#3b82f6', lineWidth: 1, title: 'SMA 20' });
+      const sma20Series = chart.addSeries(LineSeries, {
+        color: '#3b82f6',
+        lineWidth: 1,
+        title: 'SMA 20',
+      });
       sma20Series.setData(
         sma20
-          .map((val, i) => val !== undefined && { time: ohlcvData.current[i].time as Time, value: val })
+          .map(
+            (val, i) => val !== undefined && { time: ohlcvData.current[i].time as Time, value: val }
+          )
           .filter((x): x is LineData => x !== false && x !== undefined)
       );
 
-      const sma50Series = chart.addSeries(LineSeries, { color: '#f97316', lineWidth: 1, title: 'SMA 50' });
+      const sma50Series = chart.addSeries(LineSeries, {
+        color: '#f97316',
+        lineWidth: 1,
+        title: 'SMA 50',
+      });
       sma50Series.setData(
         sma50
-          .map((val, i) => val !== undefined && { time: ohlcvData.current[i].time as Time, value: val })
+          .map(
+            (val, i) => val !== undefined && { time: ohlcvData.current[i].time as Time, value: val }
+          )
           .filter((x): x is LineData => x !== false && x !== undefined)
       );
     }
@@ -159,17 +194,29 @@ function ChartComponent({ symbol, timeframe: initialTimeframe = '1M' }: ChartCom
       const ema12 = calculateEMA(closePrices, 12);
       const ema26 = calculateEMA(closePrices, 26);
 
-      const ema12Series = chart.addSeries(LineSeries, { color: '#06b6d4', lineWidth: 1, title: 'EMA 12' });
+      const ema12Series = chart.addSeries(LineSeries, {
+        color: '#06b6d4',
+        lineWidth: 1,
+        title: 'EMA 12',
+      });
       ema12Series.setData(
         ema12
-          .map((val, i) => val !== undefined && { time: ohlcvData.current[i].time as Time, value: val })
+          .map(
+            (val, i) => val !== undefined && { time: ohlcvData.current[i].time as Time, value: val }
+          )
           .filter((x): x is LineData => x !== false && x !== undefined)
       );
 
-      const ema26Series = chart.addSeries(LineSeries, { color: '#0ea5e9', lineWidth: 1, title: 'EMA 26' });
+      const ema26Series = chart.addSeries(LineSeries, {
+        color: '#0ea5e9',
+        lineWidth: 1,
+        title: 'EMA 26',
+      });
       ema26Series.setData(
         ema26
-          .map((val, i) => val !== undefined && { time: ohlcvData.current[i].time as Time, value: val })
+          .map(
+            (val, i) => val !== undefined && { time: ohlcvData.current[i].time as Time, value: val }
+          )
           .filter((x): x is LineData => x !== false && x !== undefined)
       );
     }
@@ -177,24 +224,43 @@ function ChartComponent({ symbol, timeframe: initialTimeframe = '1M' }: ChartCom
     if (showBollinger) {
       const bollinger = calculateBollinger(closePrices, 20, 2);
 
-      const upperSeries = chart.addSeries(LineSeries, { color: '#8b5cf6', lineWidth: 1, title: 'BB Upper' });
+      const upperSeries = chart.addSeries(LineSeries, {
+        color: '#8b5cf6',
+        lineWidth: 1,
+        title: 'BB Upper',
+      });
       upperSeries.setData(
         bollinger.upper
-          .map((val, i) => val !== undefined && { time: ohlcvData.current[i].time as Time, value: val })
+          .map(
+            (val, i) => val !== undefined && { time: ohlcvData.current[i].time as Time, value: val }
+          )
           .filter((x): x is LineData => x !== false && x !== undefined)
       );
 
-      const middleSeries = chart.addSeries(LineSeries, { color: '#8b5cf6', lineWidth: 1, lineStyle: 2, title: 'BB Middle' });
+      const middleSeries = chart.addSeries(LineSeries, {
+        color: '#8b5cf6',
+        lineWidth: 1,
+        lineStyle: 2,
+        title: 'BB Middle',
+      });
       middleSeries.setData(
         bollinger.middle
-          .map((val, i) => val !== undefined && { time: ohlcvData.current[i].time as Time, value: val })
+          .map(
+            (val, i) => val !== undefined && { time: ohlcvData.current[i].time as Time, value: val }
+          )
           .filter((x): x is LineData => x !== false && x !== undefined)
       );
 
-      const lowerSeries = chart.addSeries(LineSeries, { color: '#8b5cf6', lineWidth: 1, title: 'BB Lower' });
+      const lowerSeries = chart.addSeries(LineSeries, {
+        color: '#8b5cf6',
+        lineWidth: 1,
+        title: 'BB Lower',
+      });
       lowerSeries.setData(
         bollinger.lower
-          .map((val, i) => val !== undefined && { time: ohlcvData.current[i].time as Time, value: val })
+          .map(
+            (val, i) => val !== undefined && { time: ohlcvData.current[i].time as Time, value: val }
+          )
           .filter((x): x is LineData => x !== false && x !== undefined)
       );
     }
@@ -203,12 +269,29 @@ function ChartComponent({ symbol, timeframe: initialTimeframe = '1M' }: ChartCom
       renderVolumeProfile(chart);
     }
 
-    chart.timeScale().fitContent();
+    // Show only the selected timeframe's recent bars; warmup bars stay off-screen
+    const visibleBars = Math.max(1, Math.round(days * 0.714));
+    const totalBars = ohlcvData.current.length;
+    chart.timeScale().setVisibleLogicalRange({
+      from: Math.max(0, totalBars - visibleBars),
+      to: totalBars - 1,
+    });
 
     if (showRSI && rsiChartRef.current) {
       syncTimeScales(chart, rsiChartRef.current);
     }
-  }, [stock, symbol, showSMA, showEMA, showBollinger, showRSI, showVolumeProfile, timeframe, livePrice]);
+  }, [
+    stock,
+    symbol,
+    showSMA,
+    showEMA,
+    showBollinger,
+    showRSI,
+    showVolumeProfile,
+    timeframe,
+    livePrice,
+    colors,
+  ]);
 
   const buildRSIChart = useCallback(() => {
     if (!rsiChartContainerRef.current || !stock) return;
@@ -222,24 +305,27 @@ function ChartComponent({ symbol, timeframe: initialTimeframe = '1M' }: ChartCom
 
     const price = livePrice?.price ?? stock.lastPrice;
     const days = TIMEFRAME_DAYS[timeframe];
-    const data = ohlcvData.current.length > 0 ? ohlcvData.current : generateOHLCV(price, days, 0.02, stock.avgVolume20D);
+    const data =
+      ohlcvData.current.length > 0
+        ? ohlcvData.current
+        : generateOHLCV(price, days + WARMUP, 0.02, stock.avgVolume20D);
     const closePrices = data.map((c) => c.close);
     const rsi = calculateRSI(closePrices, 14);
 
     const rsiChart = createChart(rsiChartContainerRef.current, {
       width: rsiChartContainerRef.current.clientWidth,
-      height: 150,
+      height: rsiChartContainerRef.current.clientHeight || 150,
       layout: {
-        textColor: '#9ca3af',
-        background: { color: '#111827' },
+        textColor: colors.text,
+        background: { color: colors.background },
       },
       grid: {
-        vertLines: { color: '#1f2937' },
-        horzLines: { color: '#1f2937' },
+        vertLines: { color: colors.grid },
+        horzLines: { color: colors.grid },
       },
       crosshair: { mode: CrosshairMode.Normal },
       timeScale: { timeVisible: true, secondsVisible: false, visible: false },
-      rightPriceScale: { borderColor: '#374151', scaleMargins: { top: 0.1, bottom: 0.1 } },
+      rightPriceScale: { borderColor: colors.border, scaleMargins: { top: 0.1, bottom: 0.1 } },
     });
 
     rsiChartRef.current = rsiChart;
@@ -281,12 +367,17 @@ function ChartComponent({ symbol, timeframe: initialTimeframe = '1M' }: ChartCom
       axisLabelVisible: false,
     });
 
-    rsiChart.timeScale().fitContent();
+    const visibleBars = Math.max(1, Math.round(days * 0.714));
+    const totalBars = data.length;
+    rsiChart.timeScale().setVisibleLogicalRange({
+      from: Math.max(0, totalBars - visibleBars),
+      to: totalBars - 1,
+    });
 
     if (mainChartRef.current) {
       syncTimeScales(mainChartRef.current, rsiChart);
     }
-  }, [stock, symbol, showRSI, timeframe, livePrice]);
+  }, [stock, symbol, showRSI, timeframe, livePrice, colors]);
 
   function syncTimeScales(chart1: IChartApi, chart2: IChartApi) {
     const sync = (source: IChartApi, target: IChartApi) => {
@@ -317,9 +408,8 @@ function ChartComponent({ symbol, timeframe: initialTimeframe = '1M' }: ChartCom
     const profile = calculateVolumeProfile(visibleCandles, 20);
     const maxVolume = Math.max(...profile.volumes, 1);
 
-    const priceRange = profile.priceLevels.length > 1
-      ? profile.priceLevels[1] - profile.priceLevels[0]
-      : 1;
+    const priceRange =
+      profile.priceLevels.length > 1 ? profile.priceLevels[1] - profile.priceLevels[0] : 1;
 
     for (let i = 0; i < profile.priceLevels.length; i++) {
       const normalizedVol = profile.volumes[i] / maxVolume;
@@ -340,19 +430,27 @@ function ChartComponent({ symbol, timeframe: initialTimeframe = '1M' }: ChartCom
   useEffect(() => {
     buildMainChart();
 
-    const handleResize = () => {
-      if (mainChartContainerRef.current && mainChartRef.current) {
-        mainChartRef.current.applyOptions({ width: mainChartContainerRef.current.clientWidth });
+    const mainEl = mainChartContainerRef.current;
+    const rsiEl = rsiChartContainerRef.current;
+
+    const applySize = () => {
+      if (mainEl && mainChartRef.current) {
+        mainChartRef.current.applyOptions({
+          width: mainEl.clientWidth,
+          height: mainEl.clientHeight,
+        });
       }
-      if (rsiChartContainerRef.current && rsiChartRef.current) {
-        rsiChartRef.current.applyOptions({ width: rsiChartContainerRef.current.clientWidth });
+      if (rsiEl && rsiChartRef.current) {
+        rsiChartRef.current.applyOptions({ width: rsiEl.clientWidth, height: rsiEl.clientHeight });
       }
     };
 
-    window.addEventListener('resize', handleResize);
+    const ro = new ResizeObserver(applySize);
+    if (mainEl) ro.observe(mainEl);
+    if (rsiEl) ro.observe(rsiEl);
 
     return () => {
-      window.removeEventListener('resize', handleResize);
+      ro.disconnect();
       if (mainChartRef.current) {
         mainChartRef.current.remove();
         mainChartRef.current = null;
@@ -385,21 +483,24 @@ function ChartComponent({ symbol, timeframe: initialTimeframe = '1M' }: ChartCom
   const changePercent = livePrice?.changePercent ?? stock?.changePercent ?? 0;
 
   return (
-    <div className="bg-gray-900 rounded-lg p-4">
-      <div className="mb-4 flex items-center justify-between">
+    <div className={clsx('rounded-lg p-4 flex flex-col h-full', colors.container)}>
+      <div className="mb-4 flex items-center justify-between shrink-0">
         <div>
-          <h3 className="text-lg font-bold text-white">{symbol}</h3>
-          <p className="text-sm text-gray-400">{stock?.companyName}</p>
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white">{symbol}</h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400">{stock?.companyName}</p>
         </div>
         <div className="text-right">
-          <div className="text-2xl font-bold text-white">₹{currentPrice.toFixed(2)}</div>
+          <div className="text-2xl font-bold text-gray-900 dark:text-white">
+            ₹{currentPrice.toFixed(2)}
+          </div>
           <div className={`text-sm ${change >= 0 ? 'text-positive' : 'text-negative'}`}>
-            {change >= 0 ? '+' : ''}{change.toFixed(2)} ({changePercent.toFixed(2)}%)
+            {change >= 0 ? '+' : ''}
+            {change.toFixed(2)} ({changePercent.toFixed(2)}%)
           </div>
         </div>
       </div>
 
-      <div className="mb-4">
+      <div className="mb-4 shrink-0">
         <ChartToolbar
           showSMA={showSMA}
           showEMA={showEMA}
@@ -416,19 +517,23 @@ function ChartComponent({ symbol, timeframe: initialTimeframe = '1M' }: ChartCom
         />
       </div>
 
-      <div ref={mainChartContainerRef} className="w-full rounded-lg overflow-hidden" />
+      <div
+        ref={mainChartContainerRef}
+        className="w-full flex-1 min-h-0 rounded-lg overflow-hidden"
+      />
 
       {showRSI && (
-        <div className="mt-1">
-          <div className="text-xs text-gray-500 mb-1 px-1">RSI (14)</div>
-          <div ref={rsiChartContainerRef} className="w-full rounded-lg overflow-hidden" />
+        <div className="mt-1 shrink-0">
+          <div className="text-xs text-gray-600 dark:text-gray-500 mb-1 px-1">RSI (14)</div>
+          <div ref={rsiChartContainerRef} className="w-full h-[150px] rounded-lg overflow-hidden" />
         </div>
       )}
 
-      <div className="mt-4 text-xs text-gray-500">
+      <div className="mt-4 text-xs text-gray-600 dark:text-gray-500 shrink-0">
         <p>Indicators: SMA, EMA, Bollinger Bands, RSI, Volume Profile</p>
-        <p className="text-gray-400 mt-1">
-          Note: This is a demo chart with simulated data. Real trading platforms use live market data.
+        <p className="text-gray-500 dark:text-gray-400 mt-1">
+          Note: This is a demo chart with simulated data. Real trading platforms use live market
+          data.
         </p>
       </div>
     </div>

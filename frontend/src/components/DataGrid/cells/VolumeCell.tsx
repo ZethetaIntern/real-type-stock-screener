@@ -7,13 +7,9 @@ function formatVolume(num: number): string {
   return num.toString();
 }
 
-export const VolumeCell = memo(function VolumeCell({
-  value,
-}: {
-  value: number;
-}) {
+export const VolumeCell = memo(function VolumeCell({ value }: { value: number }) {
   return (
-    <span className="font-mono tabular-nums text-gray-300">
+    <span className="font-mono tabular-nums text-gray-700 dark:text-gray-300">
       {formatVolume(value)}
     </span>
   );
