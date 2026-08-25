@@ -1,5 +1,7 @@
 # EquityPulse stock screener
 
+**Live Demo:** [realtimestockscreener.vercel.app](https://realtimestockscreener.vercel.app)
+
 The completed application lives in [frontend](./frontend). It is a production-style Next.js 14 / React 18 real-time Indian equity screener project.
 
 Start locally:

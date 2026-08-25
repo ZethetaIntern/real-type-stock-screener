@@ -2,19 +2,7 @@
 
 A production-grade stock screener application built with Next.js 14, React 18, and TypeScript. Competes with Screener.in, Finviz, and TradingView Screener.
 
-## Screenshots
-
-![Screener Dashboard](./public/screenshots/dashboard.png)
-*Main dashboard with filter panel, data grid, and chart*
-
-![Filter Panel](./public/screenshots/filters.png)
-*30+ filters with real-time stock count*
-
-![Candlestick Chart](./public/screenshots/chart.png)
-*Interactive chart with 5 technical indicators*
-
-![Dark/Light Mode](./public/screenshots/themes.png)
-*Dark and light mode support*
+**Live Demo:** [realtimestockscreener.vercel.app](https://realtimestockscreener.vercel.app)
 
 ## Features
 
@@ -97,8 +85,8 @@ A production-grade stock screener application built with Next.js 14, React 18, a
 
 ```bash
 # Clone the repository
-git clone https://github.com/ZethetaIntern/equitypulse-stock-screener.git
-cd equitypulse-stock-screener/frontend
+git clone https://github.com/Mahima0824/real-type-stock-screener.git
+cd real-type-stock-screener/frontend
 
 # Install dependencies
 npm install
